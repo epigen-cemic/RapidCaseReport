@@ -1,6 +1,40 @@
-.Rproj.user
+# RStudio and R-specific files
+.Rproj.user/
 .Rhistory
-.Rdata
-.httr-oauth
+.RData
+.Ruserdata
+.Rapp.history
+
+# OS-specific
 .DS_Store
+
+# Authentication and secrets
+.httr-oauth
+.Renviron
+
+# Config files (e.g. db credentials)
+config.yml
+config.yml.backup
+*.secrets
+
+# Quarto
 .quarto
+_cache/
+*.qmd
+
+# Deployment
+*.dcf
+rsconnect/
+
+# Data files (local/test)
+*.sqlite
+*.db
+*.csv
+/data/
+
+# Common temp and backup files
+*.log
+*.tmp
+*.bak
+*.zip
+*.tar.gz
