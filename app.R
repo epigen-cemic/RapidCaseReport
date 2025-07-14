@@ -159,7 +159,7 @@ server<- function(input, output, session) {
       consultation_date = input$consultation_date,
       sex = input$sex,
       birth_date = input$birth_date,
-      residence_country = input$residence_country,
+      residence_country = "Argentina",   #input$residence_country,
       residence_province= names(province_names)[province_names == input$province_id],
       residence_locality = input$department_id,
       symptom_onset_date = input$symptom_onset_date,
