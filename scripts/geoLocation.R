@@ -1,6 +1,6 @@
 geoLocation <- function() {
   
-  username <- "taxu" #activate user //
+  username <- "epigen" #activate user //
   selection_val <- reactiveVal(NULL)
   
   clear_lower_levels <- function(level, session) {
