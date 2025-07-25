@@ -1,4 +1,8 @@
 geoLocation <- function() {
+  library(leaflet)
+  library(sf)
+  library(xml2)
+  library(gtools)
   
   username <- "epigen" #activate user //
   selection_val <- reactiveVal(NULL)
