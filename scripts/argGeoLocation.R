@@ -1,8 +1,8 @@
 argGeoLocation <- function() {
 
-  provs <- st_read(here("data", "prov_indec.gpkg"))
-  dpto  <- st_read(here("data", "dpto_indec.gpkg"))
-  fraccs <- st_read(here("data", "fracc_indec.gpkg"))
+  provs <- st_read(here("raw_data", "prov_indec.gpkg"))
+  dpto  <- st_read(here("raw_data", "dpto_indec.gpkg"))
+  fraccs <- st_read(here("raw_data", "fracc_indec.gpkg"))
   
   selected_cod_indec <- reactiveVal(NULL)
   
