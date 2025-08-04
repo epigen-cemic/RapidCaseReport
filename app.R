@@ -19,14 +19,16 @@ library(uuid)
 library(httr)
 library(jsonlite)
 library(Rcpp)
-
+library(leaflet)
+library(sf)
+library(xml2)
+library(gtools)
+library(here)
 
 # Load scripts
 
 source("scripts/geoLocation.R")
-source("scripts/databaseInit.R")
-source("scripts/databaseLoad.R")
-
+source("scripts/argGeoLocation.R")
 
 # Generate unique ID
 generate_id <- function() {
@@ -34,6 +36,7 @@ generate_id <- function() {
 }
 
 geoLocation <- geoLocation()
+argGeoLocation <- argGeoLocation()
 
 ui <- fluidPage(
   tags$head(
@@ -87,7 +90,11 @@ ui <- fluidPage(
             selectInput("sex", "Sex:", choices = c("", "M", "F")),
             dateInput("birth_date", "Birth Date:", max = Sys.Date()),
             h3("Location"),
-            (geoLocation$sidebar),
+            (argGeoLocation$sidebar),
+            #(geoLocation$sidebar),
+            h3("Symptoms"),
+            dateInput("symptom_onset_date", "Symptom Onset Date:", max = Sys.Date()),
+            textAreaInput("symptom_description", "Symptom Description:", ""),
             h3("Suspected Diagnosis"),
             textAreaInput("suspected_diagnosis", "Suspected Diagnosis:", ""),
             textInput("icd10_code", "ICD-10 Code (e.g., A00, B99):"),
@@ -101,7 +108,8 @@ ui <- fluidPage(
             tableOutput("form_preview"),
           
             div(style = "margin-top: 50px; width: 150%; overflow: visible;",
-                geoLocation$main
+                argGeoLocation$main
+                #geoLocation$main
             ),
           
             div(style = "margin-top: 1050px; text-align: center;",
@@ -115,9 +123,8 @@ ui <- fluidPage(
 
 
 server<- function(input, output, session) {
-  geoLocation$server(input, output, session)
-  session$userData$show_census_info <- reactiveVal(FALSE)
-  initialize_database("data/Dummy_database.dba")
+  argGeoLocation$server(input, output, session)
+  #geoLocation$server(input,output,session)
   form_records <- reactiveVal(data.frame())
   
   observeEvent(input$load, {
@@ -127,6 +134,7 @@ server<- function(input, output, session) {
       need(input$birth_date <= input$consultation_date, "Birth date can't be after consultation date."),
       need(input$sex %in% c("M", "F"), "Please select a sex."),
       need(!is.null(geoLocation$selection()), "You must complete the location."),
+      need(nzchar(input$symptom_description), "Symptom description is required."),
       need(nzchar(input$suspected_diagnosis), "Suspected diagnosis is required."),
       need(grepl("^[A-Z][0-9]{2}[A-Z0-9]?$", input$icd10_code) | input$icd10_code == "", "Invalid ICD-10 code format."),
       need(grepl("^\\S+@\\S+\\.\\S+$", input$email), "Please enter a valid email address."),
@@ -142,6 +150,7 @@ server<- function(input, output, session) {
             "Province:", selection$province, "\n",
             "Department:", selection$department, "\n",
             "Locality:", selection$locality, "\n",
+            "Symptoms: ", selection$symptom_description, "\n",
             "Suspected Diagnosis:", input$suspected_diagnosis, "\n",
             "ICD-10 Code:", input$icd10_code, "\n",
             "Email:", input$email, "\n",
@@ -164,6 +173,8 @@ server<- function(input, output, session) {
       selection_province = selection$province,
       selection_department = selection$department,
       selection_locality = selection$locality,
+      symptom_onset_date = input$symptom_onset_date,
+      symptom_description = input$symptom_description,
       suspected_diagnosis = input$suspected_diagnosis,
       icd10_code = input$icd10_code,
       email = input$email,
@@ -171,7 +182,6 @@ server<- function(input, output, session) {
       stringsAsFactors = FALSE
     )
 
-    insert_to_db(new_entry)
     removeModal()
     output$submission_status <- renderPrint({
       cat("Form successfully submitted. Generated ID:", new_entry$id_code)
