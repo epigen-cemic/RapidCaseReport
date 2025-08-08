@@ -24,60 +24,25 @@ library(sf)
 library(xml2)
 library(gtools)
 library(here)
+library(arrow)
 
 # Load scripts
 
-source("scripts/geoLocation.R")
-source("scripts/argGeoLocation.R")
+
+source("R/argGeoLocation.R")
 
 # Generate unique ID
 generate_id <- function() {
   UUIDgenerate()
 }
 
-geoLocation <- geoLocation()
 argGeoLocation <- argGeoLocation()
 
 ui <- fluidPage(
   tags$head(
-    tags$style(HTML("
-      body {
-        background-image: url();
-        background-size: cover;
-        background-position: top center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        background-color: #b8c1c8;
-        margin: 0;
-        padding: 0;
-      }
-
-      .content-wrapper {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-        padding-top: 180px;
-        padding-bottom: 40px;
-      }
-
-      .well-custom {
-        background-color: rgba(150, 179, 201, 0.4);
-        border-radius: 0px;
-        padding: 25px;
-        max-width: 900px;
-        width: 100%;
-        box-shadow: 0 0 20px rgba(0,0,0,0.2);
-      }
-
-      .shiny-output-error-validation {
-        color: red;
-        font-weight: bold;
-      }
-    "))
-  ),
-
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "config.css")
+    ),
   div(class = "content-wrapper",
     img(src = "PPT_cemic_header.png", class = "header-logo", height = "100px", width = "900px"),
     div(class = "well-custom",
@@ -87,11 +52,10 @@ ui <- fluidPage(
         sidebarPanel(style = "background-color: #c2c2c2;",
             h3("General Information"),
             dateInput("consultation_date", "Consultation Date:", max = Sys.Date()),
-            selectInput("sex", "Sex:", choices = c("", "M", "F")),
+            selectInput("sex", "Sex:", choices = c("", "Male", "Female", "Other", "Prefer not to say")),
             dateInput("birth_date", "Birth Date:", max = Sys.Date()),
             h3("Location"),
             (argGeoLocation$sidebar),
-            #(geoLocation$sidebar),
             h3("Symptoms"),
             dateInput("symptom_onset_date", "Symptom Onset Date:", max = Sys.Date()),
             textAreaInput("symptom_description", "Symptom Description:", ""),
@@ -109,7 +73,6 @@ ui <- fluidPage(
           
             div(style = "margin-top: 50px; width: 150%; overflow: visible;",
                 argGeoLocation$main
-                #geoLocation$main
             ),
           
             div(style = "margin-top: 1050px; text-align: center;",
@@ -120,37 +83,62 @@ ui <- fluidPage(
       )
     )
   )
+)
 
 
 server<- function(input, output, session) {
   argGeoLocation$server(input, output, session)
-  #geoLocation$server(input,output,session)
   form_records <- reactiveVal(data.frame())
   
   observeEvent(input$load, {
-    validate(
-      need(input$consultation_date <= Sys.Date(), "Consultation date can't be in the future."),
-      need(input$birth_date <= Sys.Date(), "Birth date can't be in the future."),
-      need(input$birth_date <= input$consultation_date, "Birth date can't be after consultation date."),
-      need(input$sex %in% c("M", "F"), "Please select a sex."),
-      need(!is.null(geoLocation$selection()), "You must complete the location."),
-      need(nzchar(input$symptom_description), "Symptom description is required."),
-      need(nzchar(input$suspected_diagnosis), "Suspected diagnosis is required."),
-      need(grepl("^[A-Z][0-9]{2}[A-Z0-9]?$", input$icd10_code) | input$icd10_code == "", "Invalid ICD-10 code format."),
-      need(grepl("^\\S+@\\S+\\.\\S+$", input$email), "Please enter a valid email address."),
-      need(nzchar(input$institution), "Institution is required.")
-    )
-    selection <- geoLocation$selection()
+    errors <- c()
+    
+    if (input$consultation_date > Sys.Date()) 
+      errors <- c(errors, "Consultation date can't be in the future.")
+    if (input$birth_date > Sys.Date()) 
+      errors <- c(errors, "Birth date can't be in the future.")
+    if (input$birth_date > input$consultation_date) 
+      errors <- c(errors, "Birth date can't be after consultation date.")
+    if (!input$sex %in% c("Male", "Female", "Other", "Prefer not to say")) 
+      errors <- c(errors, "Please select a sex.")
+    if (is.null(argGeoLocation$selection())) 
+      errors <- c(errors, "You must complete the location.")
+    if (!nzchar(input$symptom_description)) 
+      errors <- c(errors, "Symptom description is required.")
+    if (!nzchar(input$suspected_diagnosis)) 
+      errors <- c(errors, "Suspected diagnosis is required.")
+    if (!(grepl("^[A-Z][0-9]{2}[A-Z0-9]?$", input$icd10_code) | input$icd10_code == "")) 
+      errors <- c(errors, "Invalid ICD-10 code format.")
+    if (!grepl("^\\S+@\\S+\\.\\S+$", input$email)) 
+      errors <- c(errors, "Please enter a valid email address.")
+    if (!nzchar(input$institution)) 
+      errors <- c(errors, "Institution is required.")
+    
+    if (length(errors) > 0) {
+      showModal(modalDialog(
+        title = "Missing or invalid information",
+        paste(errors, collapse = "\n"),
+        easyClose = TRUE
+      ))
+      return()
+    }
+    selection <- argGeoLocation$selection()
+
+    if (is.null(selection)) {
+      showModal(modalDialog(
+        title = "Missing Location Information",
+        "Please complete the location information.",
+        easyClose = TRUE
+      ))
+      return()  # Stop if location is missing
+    }
+    
     showModal(modalDialog(
       title = "Confirm Submission",
       paste("Consultation Date:", input$consultation_date, "\n",
             "Sex:", input$sex, "\n",
             "Birth Date:", input$birth_date, "\n",
-            "Country:", selection$country, "\n",
-            "Province:", selection$province, "\n",
-            "Department:", selection$department, "\n",
-            "Locality:", selection$locality, "\n",
-            "Symptoms: ", selection$symptom_description, "\n",
+            "Symptoms: ", input$symptom_description, "\n",
             "Suspected Diagnosis:", input$suspected_diagnosis, "\n",
             "ICD-10 Code:", input$icd10_code, "\n",
             "Email:", input$email, "\n",
@@ -161,18 +149,16 @@ server<- function(input, output, session) {
       )
     ))
   })
-
+  
   observeEvent(input$confirm_modal, {
-    selection <- geoLocation$selection()
+    selection <- argGeoLocation$selection()
+
     new_entry <- data.frame(
       id_code = generate_id(),
       consultation_date = input$consultation_date,
       sex = input$sex,
       birth_date = input$birth_date,
-      selection_Country = selection$country,
-      selection_province = selection$province,
-      selection_department = selection$department,
-      selection_locality = selection$locality,
+      selected_location = selection,
       symptom_onset_date = input$symptom_onset_date,
       symptom_description = input$symptom_description,
       suspected_diagnosis = input$suspected_diagnosis,
@@ -182,16 +168,36 @@ server<- function(input, output, session) {
       stringsAsFactors = FALSE
     )
 
-    removeModal()
-    output$submission_status <- renderPrint({
-      cat("Form successfully submitted. Generated ID:", new_entry$id_code)
-    })
     form_records(bind_rows(form_records(), new_entry))
     
+    removeModal()
+    showModal(modalDialog(
+      title = "Submission Successful",
+      "Your form has been successfully submitted.",
+      easyClose = TRUE
+    ))
+    
     output$form_preview <- renderTable({
-      form_records()
+      # Select the specific columns to display
+      form_records() %>%
+        select(
+          consultation_date,   # Select consultation date
+          sex,                 # Select sex
+          symptom_description, # Select symptom description
+          id_code              # Select id Code
+        )
     })
+    
+    updateTextInput(session, "sex", value = "")
+    updateDateInput(session, "consultation_date", value = Sys.Date())
+    updateDateInput(session, "birth_date", value = Sys.Date())
+    updateTextInput(session, "symptom_description", value = "")
+    updateTextInput(session, "suspected_diagnosis", value = "")
+    updateTextInput(session, "icd10_code", value = "")
+    updateTextInput(session, "email", value = "")
+    updateTextInput(session, "institution", value = "")
   })
+  
   output$download_data <- downloadHandler(
     filename = function() {
       paste0("rumor_form_records_", Sys.Date(), ".csv")

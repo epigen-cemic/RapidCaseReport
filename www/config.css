@@ -1,0 +1,49 @@
+/* Background body */
+body {
+  background-image: url('Background-PPT_CEMIC.svg'); /* change to your file name */
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-color: #b8c1c8;
+  margin: 0;
+  padding: 0;
+}
+
+/* Wrapper for main content */
+.content-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 180px;
+  padding-bottom: 40px;
+}
+
+/* Header image */
+.header-logo {
+  height: 100px;
+  width: 900px;
+}
+
+/* Panel styling */
+.well-custom {
+  background-color: rgba(150, 179, 201, 0.4);
+  border-radius: 0px;
+  padding: 25px;
+  max-width: 900px;
+  width: 100%;
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+}
+
+/* Validation error text */
+.shiny-output-error-validation {
+  color: red;
+  font-weight: bold;
+}
+
+/* Map styling */
+#map {
+  filter: brightness(0.8);
+}

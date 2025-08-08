@@ -28,9 +28,13 @@ argGeoLocation <- function() {
   }
   
   sidebar <- tagList(
+    selectInput("country", "Select Country:",choices = c("Argentina"),selected = "Argentina",
+                multiple = FALSE) %>% tagAppendAttributes(disabled = "disabled"),
     selectInput("Province", "Select Province:", choices = c("No information available" = "")),
     selectInput("Department", "Select Department:", choices = c("No information available" = "")),
-    selectInput("Locality", "Select Locality:", choices = c("No information available" = ""))
+    selectInput("Locality", "Select Locality:", choices = c("No information available" = "")),
+    textInput("Fraction", "Select an Area:", value = "No information available", width = "100%")
+    
   )
   
   main <- mainPanel(
@@ -89,11 +93,19 @@ argGeoLocation <- function() {
           dpto$cpr == selected_cpr(), ]
       
       selected_cde(unique(dept_selected$cde))
+
+      selection <- selected_cde()
+      locality_filtered <- open_dataset(here("raw_data", "localities.parquet")) %>%
+        filter(cde == selection) %>% 
+        select(cde, Localidad) %>%
+        collect()
+      
+      updateSelectInput(session, "Locality", choices = c("Select a Locality:" = "", locality_filtered$Localidad))
       
       fraccs_filtered <- fraccs[fraccs$cde == selected_cde(), ]
-      loc_names <- unique(fraccs_filtered$name)
+      fracc_names <- unique(fraccs_filtered$cfn)
       
-      updateSelectInput(session, "Locality", choices = c("Select on the map" = ""))
+      updateTextInput(session, "Fraction", value = "Select on the map")
       
       leafletProxy("map") %>%
         clearShapes() %>%
@@ -147,5 +159,5 @@ argGeoLocation <- function() {
     })
   }
   
-  return(list(sidebar = sidebar, main = main, server = server))
+  return(list(sidebar = sidebar, main = main, server = server, selection = selected_cod_indec))
 }

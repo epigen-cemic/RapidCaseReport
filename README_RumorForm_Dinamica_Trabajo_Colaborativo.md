@@ -1,4 +1,4 @@
-# RumorForm_v20250624 – Collaborative Shiny App Development
+# RumorForm_v1.10F – Collaborative Shiny App Development
 
 This repository contains the code for a Shiny web application developed as part of WP1.1 of the Pandemic Preparedness Toolkit project.
 
@@ -6,7 +6,7 @@ This repository contains the code for a Shiny web application developed as part 
 
 ### 1. Clone the Repository (first time only)
 - In RStudio: `File > New Project > Version Control > Git`
-- Paste the repository URL: `https://github.com/epigen-cemic/RumorForm_v20250624.git`
+- Paste the repository URL: `https://github.com/epigen-cemic/RumorForm_v1.10F.git`
 - Choose a local folder to store the project.
 
 ### 2. Pull Before You Work
