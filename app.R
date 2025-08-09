@@ -47,12 +47,19 @@ ui <- fluidPage(
             tableOutput("form_preview")
           )
         ),
-      div(style = "margin-top: 10px; text-align: left;",
+        div(style = "margin-top: 10px; text-align: left;",
           downloadButton("download_data", "Download Reported Cases (CSV)")
-      )
+        )
       )
     )
-  )
+  ),
+  downloadButton("download_db", "Download Database", style = "
+  background-color: transparent; 
+  color: grey; 
+  font-size: 12px; 
+  border: none;
+  padding: 0;
+  cursor: pointer;")
 )
 
 
@@ -126,7 +133,6 @@ server<- function(input, output, session) {
     ))
   })
   initialize_database()
-  
   observeEvent(input$confirm_modal, {
     selection <- argGeoLocation$selection()
 
@@ -191,7 +197,16 @@ server<- function(input, output, session) {
     }
   )
 
-
+  output$download_db <- downloadHandler(
+    filename = function() {
+      paste0("rumor_database_", Sys.Date(), ".dba")
+    },
+    content = function(file) {
+      # Copy the entire SQLite file to the temp file for download
+      file.copy("data/Dummy_database.dba", file)
+    }
+  )
+  
 }
 
 shinyApp(ui, server)
