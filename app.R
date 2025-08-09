@@ -18,7 +18,7 @@ ui <- fluidPage(
   div(class = "content-wrapper",
     img(src = "PPT_cemic_header.png", class = "header-logo", height = "100px", width = "900px"),
     div(class = "well-custom",
-      titlePanel("Rumor Report Form - WP1.02 v20250624"),
+      titlePanel("Rumor Report Form - WP1.02 v1.10F2"),
 
       sidebarLayout(
         sidebarPanel(style = "background-color: #c2c2c2;",

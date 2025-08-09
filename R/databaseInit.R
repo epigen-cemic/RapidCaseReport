@@ -2,7 +2,7 @@ library(DBI)
 library(RSQLite)
 
 # Función para crear la tabla en SQLite
-initialize_database <- function(db_file = "data/Dummy_database.dba") {
+initialize_database <- function(db_file = here("data", "your_database.dba")) {
   con <- dbConnect(SQLite(), db_file)
 
     # Crear tabla con los tipos de datos especificados
