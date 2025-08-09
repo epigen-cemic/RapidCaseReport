@@ -1,7 +1,7 @@
 library(RSQLite)
 
 insert_to_db <- function(new_entry) {
-  con <- dbConnect(SQLite(), "data/Dummy_database.dba")
+  con <- dbConnect(SQLite(), here("data", "your_database.dba"))
   
 
   dbBegin(con)

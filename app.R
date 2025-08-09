@@ -1,44 +1,16 @@
 
 ########################################################################################
-## WP1.02 "Rumor Form" - Suspected cases rapid report form - v20250624_draft7 ##
+## WP1.02 "Rumor Form" - Suspected cases rapid report form - v1 edition 10 final ##
 ########################################################################################
-
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    https://shiny.posit.co/
-#
 
 
 library(shiny)
-library(dplyr)
-library(uuid)
-library(httr)
-library(jsonlite)
-library(Rcpp)
-library(leaflet)
-library(sf)
-library(xml2)
-library(gtools)
-library(here)
-library(arrow)
-
-# Load scripts
+source("R/global.R")
 
 
-source("R/argGeoLocation.R")
-
-# Generate unique ID
-generate_id <- function() {
-  UUIDgenerate()
-}
-
-argGeoLocation <- argGeoLocation()
 
 ui <- fluidPage(
+  useShinyjs(),
   tags$head(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "config.css")
@@ -68,18 +40,16 @@ ui <- fluidPage(
           ),
         
           mainPanel(
-            verbatimTextOutput("submission_status"),
-            tableOutput("form_preview"),
-          
             div(style = "margin-top: 50px; width: 150%; overflow: visible;",
                 argGeoLocation$main
             ),
-          
-            div(style = "margin-top: 1050px; text-align: center;",
-                downloadButton("download_data", "Download Reported Cases (CSV)")
-            )
+            verbatimTextOutput("submission_status"),
+            tableOutput("form_preview")
           )
-          )
+        ),
+      div(style = "margin-top: 10px; text-align: left;",
+          downloadButton("download_data", "Download Reported Cases (CSV)")
+      )
       )
     )
   )
@@ -92,7 +62,7 @@ server<- function(input, output, session) {
   
   observeEvent(input$load, {
     errors <- c()
-    
+    loc <- argGeoLocation$selection()
     if (input$consultation_date > Sys.Date()) 
       errors <- c(errors, "Consultation date can't be in the future.")
     if (input$birth_date > Sys.Date()) 
@@ -101,14 +71,16 @@ server<- function(input, output, session) {
       errors <- c(errors, "Birth date can't be after consultation date.")
     if (!input$sex %in% c("Male", "Female", "Other", "Prefer not to say")) 
       errors <- c(errors, "Please select a sex.")
-    if (is.null(argGeoLocation$selection())) 
-      errors <- c(errors, "You must complete the location.")
+    if (is.null(loc) || any(sapply(loc, function(x) is.null(x) || x == "" || is.na(x)))) {
+      errors <- c(errors, "You must complete the location.")}
     if (!nzchar(input$symptom_description)) 
       errors <- c(errors, "Symptom description is required.")
     if (!nzchar(input$suspected_diagnosis)) 
       errors <- c(errors, "Suspected diagnosis is required.")
-    if (!(grepl("^[A-Z][0-9]{2}[A-Z0-9]?$", input$icd10_code) | input$icd10_code == "")) 
-      errors <- c(errors, "Invalid ICD-10 code format.")
+    if (input$icd10_code == "") {
+      errors <- c(errors, "ICD-10 code is required.")}
+    if (!grepl("^[A-Z][0-9]{2}[A-Z0-9]?$", input$icd10_code)) {
+      errors <- c(errors, "Invalid ICD-10 code format.")}
     if (!grepl("^\\S+@\\S+\\.\\S+$", input$email)) 
       errors <- c(errors, "Please enter a valid email address.")
     if (!nzchar(input$institution)) 
@@ -117,13 +89,13 @@ server<- function(input, output, session) {
     if (length(errors) > 0) {
       showModal(modalDialog(
         title = "Missing or invalid information",
-        paste(errors, collapse = "\n"),
+        HTML(paste(errors, collapse = "<br>")),
         easyClose = TRUE
       ))
       return()
     }
+    
     selection <- argGeoLocation$selection()
-
     if (is.null(selection)) {
       showModal(modalDialog(
         title = "Missing Location Information",
@@ -138,6 +110,10 @@ server<- function(input, output, session) {
       paste("Consultation Date:", input$consultation_date, "\n",
             "Sex:", input$sex, "\n",
             "Birth Date:", input$birth_date, "\n",
+            "Province", selection$province, "\n",
+            "Department", selection$department, "\n",
+            "Locality", selection$locality, "\n",
+            "Censal Fraction", selection$census_fraction, "\n",
             "Symptoms: ", input$symptom_description, "\n",
             "Suspected Diagnosis:", input$suspected_diagnosis, "\n",
             "ICD-10 Code:", input$icd10_code, "\n",
@@ -149,25 +125,31 @@ server<- function(input, output, session) {
       )
     ))
   })
+  initialize_database()
   
   observeEvent(input$confirm_modal, {
     selection <- argGeoLocation$selection()
 
     new_entry <- data.frame(
       id_code = generate_id(),
-      consultation_date = input$consultation_date,
+      consultation_date = as.character(input$consultation_date),
       sex = input$sex,
-      birth_date = input$birth_date,
-      selected_location = selection,
-      symptom_onset_date = input$symptom_onset_date,
+      birth_date = as.character(input$birth_date),
+      province = selection$province,
+      department = selection$department,
+      locality = selection$locality,
+      censal_fraction = selection$census_fraction,
+      symptom_onset_date = as.character(input$symptom_onset_date),
       symptom_description = input$symptom_description,
       suspected_diagnosis = input$suspected_diagnosis,
       icd10_code = input$icd10_code,
+      confirmation_time = as.character(Sys.time()),
       email = input$email,
       institution = input$institution,
       stringsAsFactors = FALSE
     )
-
+    insert_to_db(new_entry)
+  
     form_records(bind_rows(form_records(), new_entry))
     
     removeModal()
@@ -178,32 +160,34 @@ server<- function(input, output, session) {
     ))
     
     output$form_preview <- renderTable({
-      # Select the specific columns to display
-      form_records() %>%
-        select(
-          consultation_date,   # Select consultation date
-          sex,                 # Select sex
-          symptom_description, # Select symptom description
-          id_code              # Select id Code
-        )
+      df <- form_records() %>%
+        select(birth_date, sex, symptom_description, id_code)%>%
+        mutate(birth_date = format(as.Date(birth_date), "%Y-%m-%d"))
+      setNames(df,
+               c("Birth Date", "Sex", "Symptoms", "ID Code"))
     })
     
-    updateTextInput(session, "sex", value = "")
     updateDateInput(session, "consultation_date", value = Sys.Date())
+    updateTextInput(session, "sex", value = "")
     updateDateInput(session, "birth_date", value = Sys.Date())
     updateTextInput(session, "symptom_description", value = "")
     updateTextInput(session, "suspected_diagnosis", value = "")
     updateTextInput(session, "icd10_code", value = "")
-    updateTextInput(session, "email", value = "")
-    updateTextInput(session, "institution", value = "")
   })
+  
+
   
   output$download_data <- downloadHandler(
     filename = function() {
       paste0("rumor_form_records_", Sys.Date(), ".csv")
     },
     content = function(file) {
-      write.csv(form_records(), file, row.names = FALSE)
+      data <- form_records()
+      if (is.null(data) || nrow(data) == 0) {
+        showNotification("No data available to download.", type = "error")
+        return(NULL)
+      }
+      write.csv(data, file, row.names = FALSE)
     }
   )
 
