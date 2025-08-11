@@ -203,7 +203,7 @@ server<- function(input, output, session) {
     },
     content = function(file) {
       # Copy the entire SQLite file to the temp file for download
-      file.copy("data/Dummy_database.dba", file)
+      file.copy(here("data", "your_database.dba"), file)
     }
   )
   
