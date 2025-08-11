@@ -84,10 +84,10 @@ server<- function(input, output, session) {
       errors <- c(errors, "Symptom description is required.")
     if (!nzchar(input$suspected_diagnosis)) 
       errors <- c(errors, "Suspected diagnosis is required.")
-    if (input$icd10_code == "") {
-      errors <- c(errors, "ICD-10 code is required.")}
-    if (!grepl("^[A-Z][0-9]{2}[A-Z0-9]?$", input$icd10_code)) {
-      errors <- c(errors, "Invalid ICD-10 code format.")}
+#    if (input$icd10_code == "") {                                  # -----------------------------------
+#      errors <- c(errors, "ICD-10 code is required.")}             # Not implemented until autocomplete
+#    if (!grepl("^[A-Z][0-9]{2}[A-Z0-9]?$", input$icd10_code)) {    # is finished
+#      errors <- c(errors, "Invalid ICD-10 code format.")}          # -----------------------------------
     if (!grepl("^\\S+@\\S+\\.\\S+$", input$email)) 
       errors <- c(errors, "Please enter a valid email address.")
     if (!nzchar(input$institution)) 
