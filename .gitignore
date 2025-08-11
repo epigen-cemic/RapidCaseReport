@@ -30,7 +30,7 @@ rsconnect/
 *.sqlite
 *.db
 *.csv
-/data/
+
 
 # Common temp and backup files
 *.log
