@@ -46,4 +46,27 @@ body {
 /* Map styling */
 #map {
   filter: brightness(0.8);
+  width: 100% !important;
+  height: 600px; /* default desktop height */
+}
+
+/* responsive height for smaller screens */
+@media (max-width: 768px) {
+  #map { height: 400px !important; }
+}
+
+/* Add spacing below the map and center the table */
+.table-container {
+  width: 90%;           /* adjust table width */
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;     /* spacing relative to previous div (map) */
+}
+
+.table-container table {
+  width: 100%;          /* table fills the container */
+  border-collapse: collapse;
+}
+
+
 }

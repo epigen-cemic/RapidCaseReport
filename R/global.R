@@ -16,8 +16,9 @@ library(shinyjs)
 # Load scripts
 
 source("R/utils.R")
-source("R/argGeoLocation.R")
+source("R/rumorFormUI.R")
+source("R/rumorFormServer.R")
+source("R/argGeoLocationUI.R")
+source("R/argGeoLocationServer.R")
 source("R/databaseInit.R")
 source("R/databaseLoad.R")
-
-argGeoLocation <- argGeoLocation()
