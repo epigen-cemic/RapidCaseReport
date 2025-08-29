@@ -4,7 +4,6 @@ generate_id <- function() {
 }
 
 # Text Manipulation
-
 to_utf8 <- function(df) {
   char_cols <- names(df)[sapply(df, is.character)]
   for (colname in char_cols) {
@@ -14,7 +13,6 @@ to_utf8 <- function(df) {
 }
 
 # query data from files
-
 get_info_about <- function(information, layer, type = NULL, name = NULL) {
   if (!is.null(type) && !is.null(name)) {
     # Conditional query to search for specific data
@@ -30,7 +28,6 @@ get_info_about <- function(information, layer, type = NULL, name = NULL) {
 }
 
 # Udate Selection
-
 update_location <- function(selected_location, level, value) {
   current <- selected_location()
   
@@ -57,7 +54,6 @@ update_location <- function(selected_location, level, value) {
 }
 
 # Area ploting
-
 get_zoom <- function(bbox) {
   max_dim <- max(bbox$xmax - bbox$xmin, bbox$ymax - bbox$ymin)
   dplyr::case_when(
@@ -120,3 +116,26 @@ plot_fractions <- function(map_id, fracc, selected_cde, cod_indec_selected, sess
     updateTextInput(session, "Fraction", value = "Select on the map")
   }
 }
+
+# get ICD codes
+get_icd_choices <- function(
+    file_path = here::here("raw_data", "ICD10_codes.csv"),
+    language = c("english", "spanish")
+) {
+  language <- match.arg(language)
+  
+  icd_table <- read.csv(file_path, stringsAsFactors = FALSE)
+
+  required_cols <- c("code", "name", "description")
+  if (!all(required_cols %in% names(icd_table))) {
+    stop("CSV must have columns: 'code', 'name', and 'description'")
+  }
+
+  label_column <- if (language == "english") "name" else "description"
+  choices <- setNames(icd_table$code, icd_table[[label_column]])
+  
+  return(choices)
+}
+
+
+

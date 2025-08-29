@@ -1,8 +1,33 @@
         # =======================
-        # Server Module
+        # ========= UI ==========
         # =======================
+argGeoLocationUI <- function(id) {
+  ns <- NS(id)
+  
+  sidebar <- tagList(
+    selectInput(ns("country"), "Select Country:",
+                choices = c("Argentina"), selected = "Argentina", multiple = FALSE) %>%
+      tagAppendAttributes(disabled = "disabled"),
+    selectInput(ns("Province"), "Select Province:", choices = c("No information available" = "")),
+    selectInput(ns("Department"), "Select Department:", choices = c("No information available" = "")),
+    selectInput(ns("Locality"), "Select Locality:", choices = c("No information available" = "")),
+    textInput(ns("Fraction"), "Select an Area:", value = "No information available", width = "100%")
+  )
+  
+  main <- mainPanel(
+    leafletOutput(ns("map"), height = "600px", width = "100%")
+  )
+  
+  # return as list
+  list(
+    sidebar = sidebar,
+    main = main
+  )
+}
 
-
+        # =======================
+        # ======== Server =======
+        # =======================
 argGeoLocationServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     # --- Variable Initialization
@@ -26,7 +51,7 @@ argGeoLocationServer <- function(id) {
     updateSelectInput(session, "Province", 
                       choices = c("Select a Province" = "", prov_choices))
     
-
+    
     observeEvent(input$Province, {
       req(input$Province != "")
       localities_shown(FALSE)
@@ -45,7 +70,7 @@ argGeoLocationServer <- function(id) {
       update_location(selected_location, "province", input$Province)
     })        # --- Observe Province
     
-
+    
     observeEvent(input$Department, {
       req(input$Department != "")
       
@@ -70,13 +95,13 @@ argGeoLocationServer <- function(id) {
       localities_shown(TRUE)
     })        # --- Observe Department
     
-
+    
     observeEvent(input$Locality, {
       req(input$Locality != "")
       update_location(selected_location, "locality", input$Locality)
     })        # --- Observe Locality
     
-
+    
     observeEvent(input$map_shape_click, {
       req(localities_shown())
       
@@ -90,7 +115,7 @@ argGeoLocationServer <- function(id) {
       update_location(selected_location, "census_fraction", selected_cod_indec())
     })        # --- Observe Fraction (click)
     
-
+    
     output$map <- renderLeaflet({
       leaflet() %>%
         addTiles() %>%

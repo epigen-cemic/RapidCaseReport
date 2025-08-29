@@ -1,7 +1,87 @@
+        # =======================
+        # ========= UI ==========
+        # =======================
+rumorFormUI <- function(id) {
+  ns <- NS(id)
+  
+  fluidPage(
+    useShinyjs(),
+    selectInput(ns("lang"), label = "Language:", choices = c("english","spanish"), selected = "english"),
+    
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "config.css")
+    ),
+
+    div(class = "content-wrapper",
+        img(src = "PPT_cemic_header.png", class = "header-logo", style = "width: 100%; height: auto; max-width: 900px;"),
+        div(class = "well-custom",
+            titlePanel(div(style = "text-align: center; margin-bottom: 20px;",
+                           "Rumor Report Form - WP1.02 v1.10F2")),
+            
+            sidebarLayout(
+              sidebarPanel(style = "background-color: #c2c2c2;",
+                           
+                           h3("General Information"),
+                           dateInput(ns("consultation_date"), "Consultation Date:", max = Sys.Date()),
+                           selectInput(ns("sex"), "Sex:", choices = c("", "Male", "Female", "Other", "Prefer not to say")),
+                           dateInput(ns("birth_date"), "Birth Date:", max = Sys.Date()),
+                           
+                           h3("Location"),
+                           argGeoLocationUI("geo")$sidebar,  # internal module, keep original ID
+                           
+                           h3("Symptoms"),
+                           dateInput(ns("symptom_onset_date"), "Symptom Onset Date:", max = Sys.Date()),
+                           textAreaInput(ns("symptom_description"), "Symptom Description:", ""),
+                           
+                           h3("Suspected Diagnosis"),
+                           icdAutocompleteUI("icd_module"),
+                           
+                           h3("Professional's Information"),
+                           textInput(ns("email"), "Email:", placeholder = "Enter your email"),
+                           textInput(ns("institution"), "Institution:", placeholder = "Enter your institution"),
+                           
+                           actionButton(ns("load"), "Load Information")
+              ),
+              
+              mainPanel(
+                div(style = "margin-top: 50px; width: 150%; overflow: visible; margin-bottom: 20px;",
+                    argGeoLocationUI("geo")$main
+                ),
+                
+                verbatimTextOutput(ns("submission_status")),
+                div(class = "table-container",
+                    tableOutput(ns("form_preview"))
+                )
+              )
+            ),
+            div(style = "margin-top: 10px; text-align: left;",
+                downloadButton(ns("download_data"), "Download Reported Cases (CSV)")
+            )
+        )
+    ),
+    downloadButton(ns("download_db"), "Download Database", style = "
+      background-color: transparent; 
+      color: grey; 
+      font-size: 12px; 
+      border: none;
+      padding: 0;
+      cursor: pointer;")
+  )
+}
+
+        # =======================
+        # ======== Server =======
+        # =======================
 rumorFormServer <- function(id, selected_location) {
   moduleServer(id, function(input, output, session) {
-    
+    current_lang <- reactive({ input$lang })
     form_records <- reactiveVal(data.frame())
+    selected_codes <- icdAutocompleteServer("icd_module", icd_choices, max_items = 5, )
+    
+    output$codes <- renderPrint({
+      selected_codes()
+    })
+    
     
     observeEvent(input$load, {
       errors <- c()
@@ -20,10 +100,8 @@ rumorFormServer <- function(id, selected_location) {
         errors <- c(errors, "Symptom description is required.")
       if (!nzchar(input$suspected_diagnosis)) 
         errors <- c(errors, "Suspected diagnosis is required.")
-      #    if (input$icd10_code == "") {                                  # -----------------------------------
-      #      errors <- c(errors, "ICD-10 code is required.")}             # Not implemented until autocomplete
-      #    if (!grepl("^[A-Z][0-9]{2}[A-Z0-9]?$", input$icd10_code)) {    # is finished
-      #      errors <- c(errors, "Invalid ICD-10 code format.")}          # -----------------------------------
+      if (input$icd10_code == "") {                           
+        errors <- c(errors, "ICD-10 code is required.")}             
       if (!grepl("^\\S+@\\S+\\.\\S+$", input$email)) 
         errors <- c(errors, "Please enter a valid email address.")
       if (!nzchar(input$institution)) 
@@ -96,9 +174,9 @@ rumorFormServer <- function(id, selected_location) {
       
       output$form_preview <- renderTable({
         df <- form_records() %>%
-          select(birth_date, sex, symptom_description, id_code) %>%
+          select(birth_date, sex, consultation_date ,symptom_description, icd_choices) %>%
           mutate(birth_date = format(as.Date(birth_date), "%Y-%m-%d"))
-        setNames(df, c("Birth Date", "Sex", "Symptoms", "ID Code"))
+        setNames(df, c("Birth Date", "Sex", "Consultation date", "Symptoms", "ICD-10 Codes"))
       }, bordered = TRUE)
       
       # Reset inputs
