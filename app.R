@@ -11,7 +11,7 @@ ui <- rumorFormUI("main_form")
 
 server<- function(input, output, session) {
     
-  selected_location <- argGeoLocationServer("geo",)
+  selected_location <- argGeoLocationServer("geo")
   
   initialize_database()
   
@@ -44,4 +44,5 @@ server<- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
 
