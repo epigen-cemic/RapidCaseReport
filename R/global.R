@@ -12,7 +12,6 @@ library(gtools)
 library(here)
 library(arrow)
 library(shinyjs)
-library(shiny.i18n)
 
 # Load scripts
 
@@ -23,5 +22,4 @@ source("R/databaseInit.R")
 source("R/databaseLoad.R")
 source("R/icdAutocomplete.R")
 
-i18n <- Translator$new(translation_csvs_path = "raw_data")
-i18n$set_translation_language("english")
+translations <- fromJSON(here("raw_data", "translations.json"))

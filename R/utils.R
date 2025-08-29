@@ -118,24 +118,26 @@ plot_fractions <- function(map_id, fracc, selected_cde, cod_indec_selected, sess
 }
 
 # get ICD codes
-get_icd_choices <- function(
-    file_path = here::here("raw_data", "ICD10_codes.csv"),
-    language = c("english", "spanish")
-) {
-  language <- match.arg(language)
-  
-  icd_table <- read.csv(file_path, stringsAsFactors = FALSE)
 
-  required_cols <- c("code", "name", "description")
+get_icd_table <- function(file_path = here("raw_data", "ICD10_codes.csv")) {
+  icd_table <- read_csv(file_path, locale = locale(encoding = "UTF-8", ), show_col_types = FALSE)
+  required_cols <- c("code", "description")
   if (!all(required_cols %in% names(icd_table))) {
-    stop("CSV must have columns: 'code', 'name', and 'description'")
+    stop("CSV must have columns: 'code' and 'description'")
   }
-
-  label_column <- if (language == "english") "name" else "description"
-  choices <- setNames(icd_table$code, icd_table[[label_column]])
   
-  return(choices)
+  icd_table <- icd_table[, required_cols]
+  icd_table <- icd_table[!is.na(icd_table$code) & !is.na(icd_table$description), ]
+  
+  icd_table$code <- trimws(icd_table$code)
+  icd_table$description <- trimws(icd_table$description)
+
+  icd_table <- icd_table[!duplicated(icd_table$code), ]
+
+  return(icd_table)
 }
+
+
 
 
 

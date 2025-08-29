@@ -1,7 +1,7 @@
         # =======================
         # ========= UI ==========
         # =======================
-icdAutocompleteUI <- function(id, label = "Type a diagnosis:") {
+icdAutocompleteUI <- function(id, label = "Ingrese un Diagnóstico:") {
   ns <- NS(id)
   tagList(
     selectizeInput(
@@ -9,7 +9,7 @@ icdAutocompleteUI <- function(id, label = "Type a diagnosis:") {
       label,
       choices = NULL,
       options = list(
-        placeholder = 'Type diagnosis...',
+        placeholder = 'Ingrese un Diagnóstico...',
         maxItems = 1,
         create = FALSE
       )
@@ -25,14 +25,16 @@ icdAutocompleteUI <- function(id, label = "Type a diagnosis:") {
         # =======================
         # ======== Server =======
         # =======================
-icdAutocompleteServer <- function(id, icd_choices, max_items = 5, language) {
+icdAutocompleteServer <- function(id, icd_choices, max_items = 5) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    icd_choices <- get_icd_choices(language)
-    
     selected_codes <- reactiveVal(character(0))
     
+    icd_table <- get_icd_table()
+    icd_choices <- setNames(icd_table$code, icd_table$description)
+    
     updateSelectizeInput(session, "icd_input", choices = icd_choices, server = TRUE)
+    
     
     observeEvent(input$icd_input, {
       if (length(selected_codes()) < max_items && input$icd_input != "") {
