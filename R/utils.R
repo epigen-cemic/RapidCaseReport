@@ -116,28 +116,3 @@ plot_fractions <- function(map_id, fracc, selected_cde, cod_indec_selected, sess
     updateTextInput(session, "Fraction", value = "Select on the map")
   }
 }
-
-# get ICD codes
-
-get_icd_table <- function(file_path = here("raw_data", "ICD10_codes.csv")) {
-  icd_table <- read_csv(file_path, locale = locale(encoding = "UTF-8", ), show_col_types = FALSE)
-  required_cols <- c("code", "description")
-  if (!all(required_cols %in% names(icd_table))) {
-    stop("CSV must have columns: 'code' and 'description'")
-  }
-  
-  icd_table <- icd_table[, required_cols]
-  icd_table <- icd_table[!is.na(icd_table$code) & !is.na(icd_table$description), ]
-  
-  icd_table$code <- trimws(icd_table$code)
-  icd_table$description <- trimws(icd_table$description)
-
-  icd_table <- icd_table[!duplicated(icd_table$code), ]
-
-  return(icd_table)
-}
-
-
-
-
-
