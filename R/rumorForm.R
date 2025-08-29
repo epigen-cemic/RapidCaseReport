@@ -6,8 +6,6 @@ rumorFormUI <- function(id) {
   
   fluidPage(
     useShinyjs(),
-    selectInput(ns("lang"), label = "Language:", choices = c("english","spanish"), selected = "english"),
-    
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "config.css")
     ),
