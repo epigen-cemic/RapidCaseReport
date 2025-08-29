@@ -20,6 +20,4 @@ source("R/rumorForm.R")
 source("R/argGeoLocation.R")
 source("R/databaseInit.R")
 source("R/databaseLoad.R")
-source("R/icdAutocomplete.R")
 
-translations <- fromJSON(here("raw_data", "translations.json"))
