@@ -7,35 +7,15 @@
 library(shiny)
 source("R/global.R")
 
-ui <- fluidPage(
-  uiOutput("my_module_ui")
-)
+ui <- rumorFormUI("main_form")
 
 server<- function(input, output, session) {
-  
-  current_lang <- reactiveVal("spanish")  # select desired Language
-  
-  observeEvent(input$lang, {
-    current_lang(input$lang)
-  })
-  
-  translate <- reactive({
-    lang <- current_lang()
-    function(key) {
-      if (!is.null(translations[[lang]]) && key %in% names(translations[[lang]])) {
-        translations[[lang]][[key]]} else {key}
-    }
-  })
-  
-  output$my_module_ui <- renderUI({
-    rumorFormUI("main_form")
-  })
-  
-  selected_location <- argGeoLocationServer("geo", translate)
+    
+  selected_location <- argGeoLocationServer("geo",)
   
   initialize_database()
   
-  rumorFormServer("main_form", selected_location, language = translate)
+  rumorFormServer("main_form", selected_location)
   
   output$download_data <- downloadHandler(
     filename = function() {
@@ -44,7 +24,7 @@ server<- function(input, output, session) {
     content = function(file) {
       data <- form_records()
       if (is.null(data) || nrow(data) == 0) {
-        showNotification(tr("No data available to download."), type = "error")
+        showNotification("No data available to download.", type = "error")
         return(NULL)
       }
       write.csv(data, file, row.names = FALSE)
@@ -64,3 +44,4 @@ server<- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
