@@ -173,6 +173,29 @@ rumorFormServer <- function(id, selected_location) {
       updateTextInput(session, "symptom_description", value = "")
       updateTextInput(session, "suspected_diagnosis", value = "")
     })
-    
+
+  output$download_data <- downloadHandler(
+    filename = function() {
+      paste0("rumor_form_records_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      data <- form_records()
+      if (is.null(data) || nrow(data) == 0) {
+        showNotification("No data available to download.", type = "error")
+        return(NULL)
+      }
+      write.csv(data, file, row.names = FALSE)
+    }
+  )
+
+  output$download_db <- downloadHandler(
+    filename = function() {
+      paste0("rumor_database_", Sys.Date(), ".dba")
+    },
+    content = function(file) {
+      # Copy the entire SQLite file to the temp file for download
+      file.copy(here("data", "your_database.dba"), file)
+    }
+  )
   })
 }
