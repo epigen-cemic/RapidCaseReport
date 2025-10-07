@@ -44,5 +44,4 @@ download_admin <- function(output_file) {
   # Copy the full database file
   # This could take a long time if the database get to large. NOT Recomended
   file.copy(db_path, output_file, overwrite = TRUE)
-  message("Full database saved to ", output_file)
 }

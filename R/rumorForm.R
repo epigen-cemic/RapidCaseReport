@@ -64,7 +64,7 @@ rumorFormUI <- function(id) {
       border: none;
       padding: 0;
       cursor: pointer;"),
-    downloadButton(ns("file_download"), "", style = "display:none;")
+    downloadButton(ns("file_download"), "Download Now", style = "display:none;")
   )
 }
 
@@ -216,13 +216,17 @@ rumorFormServer <- function(id, selected_location) {
         )
       ))
     } else {
+      showModal(modalDialog(
+        title = "Download Your Data",
+        "Click the button below to download your CSV:",
+        footer = downloadButton(ns("file_download"), "Download Now")
+      ))
       temp_file <- tempfile(fileext = ".csv")
       download_email(email, temp_file)
       output$file_download <- downloadHandler(
         filename = paste0("data_", email, ".csv"),
         content = function(file) file.copy(temp_file, file)
       )
-      click(ns("file_download"))
     }
   })
   
@@ -232,6 +236,11 @@ rumorFormServer <- function(id, selected_location) {
     removeModal()
     
     if (password == Sys.getenv("ADMIN_PASSWORD")) {
+      showModal(modalDialog(
+        title = "Download Full Database",
+        "Click the button below to download the full database:",
+        footer = downloadButton(ns("file_download"), "Download Now")
+      ))
       temp_file <- tempfile(fileext = ".dba")
       download_admin(temp_file)
       output$file_download <- downloadHandler(
@@ -240,8 +249,6 @@ rumorFormServer <- function(id, selected_location) {
           file.copy(temp_file, file, overwrite = TRUE)
         }
       )
-
-      click(ns("file_download"))
       
     } else {
       showModal(modalDialog(
@@ -251,9 +258,6 @@ rumorFormServer <- function(id, selected_location) {
       ))
     }
   })
-  
-  
-  
 
   output$file_download <- downloadHandler(
     filename = function() {
@@ -266,7 +270,7 @@ rumorFormServer <- function(id, selected_location) {
       else {download_email(input$email, file)}
     }
   )
-  
+
 
   })
 }
