@@ -10,7 +10,6 @@
 
 # Authentication and secrets
 .httr-oauth
-.Renviron
 
 # Config files (e.g. db credentials)
 config.yml
