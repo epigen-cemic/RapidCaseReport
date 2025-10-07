@@ -57,13 +57,14 @@ rumorFormUI <- function(id) {
             )
         )
     ),
-    downloadButton(ns("download_db"), "Download Database", style = "
+    actionButton(ns("download_db"), "Download Database", style = "
       background-color: transparent; 
       color: grey; 
       font-size: 12px; 
       border: none;
       padding: 0;
-      cursor: pointer;")
+      cursor: pointer;"),
+    downloadButton(ns("file_download"), "", style = "display:none;")
   )
 }
 
@@ -72,6 +73,7 @@ rumorFormUI <- function(id) {
         # =======================
 rumorFormServer <- function(id, selected_location) {
   moduleServer(id, function(input, output, session) {
+    ns <- session$ns
     form_records <- reactiveVal(data.frame())
 
     observeEvent(input$load, {
@@ -187,15 +189,84 @@ rumorFormServer <- function(id, selected_location) {
       write.csv(data, file, row.names = FALSE)
     }
   )
+  
+  observeEvent(input$download_db, {
+    showModal(modalDialog(
+      title = "Enter your email",
+      textInput(ns("email_input"), "Email:"),
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton(ns("confirm_email"), "Confirm")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm_email, {
+    req(input$email_input)
+    email <- input$email_input
+    removeModal()
+    
+    if (email == Sys.getenv("ADMIN_EMAIL")) {
+      showModal(modalDialog(
+        title = "Admin Password",
+        passwordInput(ns("admin_password_input"), "Password:"),
+        footer = tagList(
+          modalButton("Cancel"),
+          actionButton(ns("confirm_password"), "Confirm")
+        )
+      ))
+    } else {
+      temp_file <- tempfile(fileext = ".csv")
+      download_email(email, temp_file)
+      output$file_download <- downloadHandler(
+        filename = paste0("data_", email, ".csv"),
+        content = function(file) file.copy(temp_file, file)
+      )
+      click(ns("file_download"))
+    }
+  })
+  
+  observeEvent(input$confirm_password, {
+    req(input$admin_password_input)
+    password <- input$admin_password_input
+    removeModal()
+    
+    if (password == Sys.getenv("ADMIN_PASSWORD")) {
+      temp_file <- tempfile(fileext = ".dba")
+      download_admin(temp_file)
+      output$file_download <- downloadHandler(
+        filename = paste0("rumor_database_", Sys.Date(), ".dba"),
+        content = function(file) {
+          file.copy(temp_file, file, overwrite = TRUE)
+        }
+      )
 
-  output$download_db <- downloadHandler(
+      click(ns("file_download"))
+      
+    } else {
+      showModal(modalDialog(
+        title = "Error",
+        "Incorrect password.",
+        easyClose = TRUE
+      ))
+    }
+  })
+  
+  
+  
+
+  output$file_download <- downloadHandler(
     filename = function() {
-      paste0("rumor_database_", Sys.Date(), ".dba")
+      if (input$user_type == "admin") {
+        paste0("rumor_database_", Sys.Date(), ".dba")}
+      else {paste0("data_", input$email, ".csv")}
     },
     content = function(file) {
-      # Copy the entire SQLite file to the temp file for download
-      file.copy(here("data", "your_database.dba"), file)
+      if (input$user_type == "admin") {download_admin(file)}
+      else {download_email(input$email, file)}
     }
   )
+  
+
   })
 }
