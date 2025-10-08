@@ -64,9 +64,19 @@ body {
 }
 
 .table-container table {
-  width: 100%;          /* table fills the container */
+  width: 100%;
   border-collapse: collapse;
+  background-color: #b8b8b8; /* subtle but distinguishable contrast */
+}
+
+.table-container th,
+.table-container td {
+  border: 1px solid #999999;
+  padding: 6px;
+  text-align: left;
+}
+
 }
 
 
-}
+
