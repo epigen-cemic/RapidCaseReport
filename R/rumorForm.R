@@ -7,6 +7,7 @@ rumorFormUI <- function(id) {
   fluidPage(
     useShinyjs(),
     tags$head(
+      tags$title("Rumor Report Form"),
       tags$link(rel = "stylesheet", type = "text/css", href = "config.css")
     ),
 
@@ -14,7 +15,7 @@ rumorFormUI <- function(id) {
         img(src = "PPT_cemic_header.png", class = "header-logo", style = "width: 100%; height: auto; max-width: 900px;"),
         div(class = "well-custom",
             titlePanel(div(style = "text-align: center; margin-bottom: 20px;",
-                           "Rumor Report Form - WP1.02 v1.10F2")),
+                           "Rumor Report Form - WP1.02 v1.2")),
             
             sidebarLayout(
               sidebarPanel(style = "background-color: #c2c2c2;",
@@ -197,7 +198,8 @@ rumorFormServer <- function(id, selected_location) {
       footer = tagList(
         modalButton("Cancel"),
         actionButton(ns("confirm_email"), "Confirm")
-      )
+      ),
+      easyClose = TRUE
     ))
   })
   
@@ -213,13 +215,15 @@ rumorFormServer <- function(id, selected_location) {
         footer = tagList(
           modalButton("Cancel"),
           actionButton(ns("confirm_password"), "Confirm")
-        )
+        ),
+        easyClose = TRUE
       ))
     } else {
       showModal(modalDialog(
         title = "Download Your Data",
         "Click the button below to download your CSV:",
-        footer = downloadButton(ns("file_download"), "Download Now")
+        footer = downloadButton(ns("file_download"), "Download Now"),
+        easyClose = TRUE
       ))
       temp_file <- tempfile(fileext = ".csv")
       download_email(email, temp_file)
@@ -239,7 +243,8 @@ rumorFormServer <- function(id, selected_location) {
       showModal(modalDialog(
         title = "Download Full Database",
         "Click the button below to download the full database:",
-        footer = downloadButton(ns("file_download"), "Download Now")
+        footer = downloadButton(ns("file_download"), "Download Now"),
+        easyClose = TRUE
       ))
       temp_file <- tempfile(fileext = ".dba")
       download_admin(temp_file)
