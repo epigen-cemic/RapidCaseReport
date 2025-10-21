@@ -5,9 +5,8 @@ argGeoLocationUI <- function(id) {
   ns <- NS(id)
   
   sidebar <- tagList(
-    selectInput(ns("country"), "Select Country:",
-                choices = c("Argentina"), selected = "Argentina", multiple = FALSE) %>%
-      tagAppendAttributes(disabled = "disabled"),
+    selectInput(ns("country"), "Select Country:", choices = c("Argentina", "Brazil", "Chile", "Uruguay"),
+      selected = "Argentina", multiple = FALSE),
     selectInput(ns("Province"), "Select Province:", choices = c("No information available" = "")),
     selectInput(ns("Department"), "Select Department:", choices = c("No information available" = "")),
     selectInput(ns("Locality"), "Select Locality:", choices = c("No information available" = "")),
@@ -46,6 +45,27 @@ argGeoLocationServer <- function(id) {
     selected_cde <- reactiveVal(NULL)
     localities_shown <- reactiveVal(FALSE)
     
+    
+    
+    # placeholder
+    observeEvent(input$country, {
+      if (input$country == "Argentina") {
+        updateSelectInput(
+          session, "Province",
+          choices = c("Select a Province" = "", prov_choices), selected = "")
+      } else {
+        updateSelectInput(
+          session, "Province",
+          choices = c("No information available" = ""), selected = "")
+        updateSelectInput(
+          session, "Department",
+          choices = c("No information available" = ""), selected = "")
+        updateSelectInput(
+          session, "Locality",
+          choices = c("No information available" = ""), selected = "")
+      }
+    })
+
     # --- Init Province choices
     prov_choices <- unique(provs$nam)
     updateSelectInput(session, "Province", 
