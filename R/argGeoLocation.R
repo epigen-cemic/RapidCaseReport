@@ -35,6 +35,7 @@ argGeoLocationServer <- function(id) {
     fracc <- reactiveVal(get_info_about("*", "dpto", "cde", "00"))
     
     selected_location <- reactiveVal(list(
+      country = NULL,
       province = NULL,
       department = NULL,
       locality = NULL,
@@ -66,6 +67,13 @@ argGeoLocationServer <- function(id) {
       }
     })
 
+    observeEvent(input$country, {
+      loc <- selected_location()
+      loc$country <- input$country
+      selected_location(loc)
+    })
+    
+    
     # --- Init Province choices
     prov_choices <- unique(provs$nam)
     updateSelectInput(session, "Province", 
