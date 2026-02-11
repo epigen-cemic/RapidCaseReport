@@ -1,39 +1,28 @@
-# ==============================================================================
-# GLOBAL CONFIGURATION - Rumor Report Form v1.2
-# ==============================================================================
-
-# 1. Load Libraries
 library(shiny)
 library(dplyr)
 library(uuid)
 library(httr)
 library(jsonlite)
+library(Rcpp)
 library(leaflet)
 library(sf)
+library(xml2)
+library(gtools)
 library(here)
 library(arrow)
 library(shinyjs)
 
+# Load scripts
 
-# 2. Source Module Scripts
 source("R/utils.R")
 source("R/rumorForm.R")
+source("R/argGeoLocation.R")
 source("R/databaseInit.R")
 source("R/databaseLoad.R")
-source("R/geoLocationUI.R")
-source("R/geoLocationServer.R")
-
-# 3. Load Master Configuration
-config_path <- here::here("www/config.json")
-
-ALL_CONFIGS <- tryCatch({
-  jsonlite::fromJSON(config_path)
-}, error = function(e) {
-  stop(paste("Failed to load config.json. Check if the file is empty or has syntax errors. Error:", e$message))
-})
 
 
-# 4. Environment Variables Health Check
+# The following information is in a .Renviron to keep safe and invisible to users
+# for servers this is done as an enviroment variable.
 admin_email <- Sys.getenv("ADMIN_EMAIL")
 admin_password <- Sys.getenv("ADMIN_PASSWORD")
 db_path <- Sys.getenv("DB_PATH")
