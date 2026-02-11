@@ -9,18 +9,17 @@ source("R/global.R")
 
 ui <- rumorFormUI("main_form")
 
-server<- function(input, output, session) {
-    
-  selected_location <- argGeoLocationServer("geo")
+server <- function(input, output, session) {
   
+  # Initialize the database connection/files
   initialize_database()
   
-  rumorFormServer("main_form", selected_location)
-  
+  # Start the main form module server.
+  # It now handles the geoLocation module internally!
+  rumorFormServer("main_form")
   
 }
 
 shinyApp(ui, server)
-
 
 
