@@ -1,82 +1,215 @@
-/* Background body */
+/* ==========================================
+   1. GLOBAL CONFIGURATION (The "Brain")
+   ========================================== */
+:root {
+  /* Header & Navigation (from Hero Image) */
+  --nav-bg-color: #2d332a;         /* Dark top bar */
+  --hero-bg-color: #5b6d5b;        /* Muted green title area */
+  --accent-orange: #e67e22;        /* Orange line under breadcrumbs */
+  --text-white: #ffffff;
+  --text-gray: #b0b0b0;
+
+  /* Body & Panels */
+  --main-bg-color: #fdfdfb;        /* Off-white body background */
+  --panel-bg-color: #ffffff;
+  --border-light: #dee2e6;
+
+  /* Buttons & Actions (from Reference Images) */
+  --btn-green-bg: #434d3e;       /* Dark green for 'Questions/Load' */
+  --btn-green-hover: #353d31;
+  --link-blue: #2980b9;          /* Blue for 'Reset' and 'Download' text */
+  --error-red: #dc3545;
+
+  /* Layout Dimensions */
+  --max-content-width: 1100px;
+  --nav-height: 60px;
+  --hero-height: 200px;
+}
+
+/* ==========================================
+   2. GLOBAL BODY & TEXT STYLES
+   ========================================== */
 body {
-  background-image: url(); /* change to your file name */
-  background-size: cover;
-  background-position: top center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-color: #b8c1c8;
+  background-color: var(--main-bg-color);
   margin: 0;
   padding: 0;
+  font-family: 'Open Sans', 'Segoe UI', Arial, sans-serif;
+  color: #333;
 }
 
-/* Wrapper for main content */
+/* ==========================================
+   3. HEADER ARCHITECTURE (Two-Tier)
+   ========================================== */
+
+/* Top Bar */
+.nav-bar {
+  background-color: var(--nav-bg-color);
+  height: var(--nav-height);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-content {
+  width: 100%;
+  max-width: var(--max-content-width);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.header-logo-left {
+  height: 40px;
+  width: 220px;
+  background-image: url('AnalysisforAction_white.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: left center;
+}
+
+/* Hero Title Section */
+.hero-section {
+  background-color: var(--hero-bg-color);
+  width: 100%;
+  height: var(--hero-height);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 4px solid var(--accent-orange); 
+}
+
+.hero-content {
+  width: 100%;
+  max-width: var(--max-content-width);
+  padding: 0 20px;
+  color: var(--text-white);
+}
+
+.breadcrumb-text {
+  font-size: 1.5rem;
+  color: var(--text-gray);
+  margin-bottom: 12px;
+}
+
+.app-title {
+  font-size: 5rem;
+  font-weight: 300;
+  margin: 0;
+}
+
+/* ==========================================
+   4. MAIN CONTENT & PANELS
+   ========================================== */
 .content-wrapper {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
-  padding-top: 180px;
-  padding-bottom: 40px;
+  padding: 40px 20px;
 }
 
-/* Header image */
-.header-logo {
-  height: 100px;
-  width: 900px;
-}
-
-/* Panel styling */
 .well-custom {
-  background-color: rgba(150, 179, 201, 0.4);
-  border-radius: 0px;
-  padding: 25px;
-  max-width: 900px;
+  background-color: var(--panel-bg-color);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  padding: 30px;
+  max-width: var(--max-content-width);
   width: 100%;
-  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 15px rgba(0,0,0,0.06);
 }
 
-/* Validation error text */
-.shiny-output-error-validation {
-  color: red;
-  font-weight: bold;
+/* Sidebar Styling */
+.well {
+  background-color: #f8f9fa !important;
+  border: 1px solid var(--border-light) !important;
 }
 
-/* Map styling */
+/* ==========================================
+   5. COMPONENT STYLES (Map & Table)
+   ========================================== */
+
 #map {
-  filter: brightness(0.8);
   width: 100% !important;
-  height: 600px; /* default desktop height */
+  height: 600px;
+  border-radius: 4px;
+  border: 1px solid var(--border-light);
 }
 
-/* responsive height for smaller screens */
-@media (max-width: 768px) {
-  #map { height: 400px !important; }
-}
-
-/* Add spacing below the map and center the table */
 .table-container {
-  width: 90%;           /* adjust table width */
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 20px;     /* spacing relative to previous div (map) */
+  width: 100%;
+  margin-top: 30px;
+  overflow-x: auto;
 }
 
 .table-container table {
   width: 100%;
+  background-color: #fff;
   border-collapse: collapse;
-  background-color: #b8b8b8; /* subtle but distinguishable contrast */
 }
 
-.table-container th,
-.table-container td {
-  border: 1px solid #999999;
-  padding: 6px;
-  text-align: left;
+.table-container th, .table-container td {
+  border: 1px solid var(--border-light);
+  padding: 12px;
+  text-align: center;
 }
 
+.table-container th {
+  background-color: #f1f3f4;
+  color: #5f6368;
 }
 
+.shiny-output-error-validation {
+  color: var(--error-red);
+  font-weight: bold;
+}
 
+/* ==========================================
+   6. BUTTONS & ACTIONS
+   ========================================== */
 
+/* Primary "Load" Button */
+#form-load {
+  background-color: var(--btn-green-bg) !important;
+  color: var(--text-white) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 25px !important;
+  font-weight: 500 !important;
+  transition: background-color 0.2s;
+}
+
+#form-load:hover {
+  background-color: var(--btn-green-hover) !important;
+}
+
+/* Reset Button as a Blue Link */
+#form-geo-reset_geo {
+  background: transparent !important;
+  color: var(--link-blue) !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  text-decoration: none;
+  font-weight: 400 !important;
+}
+
+#form-geo-reset_geo:hover {
+  text-decoration: underline;
+}
+
+/* Download Link Style */
+.shiny-download-link {
+  color: var(--link-blue) !important;
+  background: transparent !important;
+  border: none !important;
+  text-decoration: none;
+  font-weight: 400 !important;
+}
+
+/* ==========================================
+   7. RESPONSIVE ADJUSTMENTS
+   ========================================== */
+@media (max-width: 768px) {
+  .hero-section { height: 150px; }
+  .app-title { font-size: 1.8rem; }
+  #map { height: 400px !important; }
+}

@@ -1,0 +1,2 @@
+data_dir: "raw_data"
+b_path: "data/rumor_database.sqlite"
