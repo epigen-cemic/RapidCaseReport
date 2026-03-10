@@ -40,11 +40,11 @@ geoLocationServer <- function(id, geo_config, data_dir) {
     valid_countries <- names(geo_config)[names(geo_config) != "(Select Country)"]
     updateSelectInput(session, "country", choices = c("Select a Country" = "", valid_countries))
     
-    # Initialize the map with a base view
+    # Initialize the map 
     output$map <- renderLeaflet({
-      leaflet() %>%
-        addTiles() %>%
-        setView(lng = -63.6167, lat = -38.4161, zoom = 4)
+      leaflet() %>% 
+        addTiles() %>% 
+        setView(lng = -63.6, lat = -38.4, zoom = 5)
     })
     
     # Helper function to clear lower levels

@@ -28,7 +28,6 @@ geo_config <- jsonlite::fromJSON(here::here("config.json"), simplifyVector = FAL
 # Define the data directory for all spatial queries
 data_dir <- here::here("raw_data")
 
-
 # Load scripts
 # Load Module Logic
 source(here::here("R", "rumor_geolocation.R"))

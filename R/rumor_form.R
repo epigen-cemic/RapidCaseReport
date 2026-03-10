@@ -50,7 +50,7 @@ rumorFormUI <- function(id) {
                            textInput(ns("email"), "Email:", placeholder = "Enter your email"),
                            textInput(ns("institution"), "Institution:", placeholder = "Enter your institution"),
                            
-                           actionButton(ns("load"), "Load Information")
+                           actionButton(ns("load"), "Upload Information")
               ),
               
               mainPanel(
