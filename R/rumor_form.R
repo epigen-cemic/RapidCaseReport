@@ -135,13 +135,14 @@ rumorFormServer <- function(id, selected_location, pool) {
           "<b>Consultation Date:</b> ", input$consultation_date, "<br/>",
           "<b>Birth Date:</b> ", input$birth_date, "<br/>", # Added Birth Date
           "<b>Sex:</b> ", input$sex, "<br/>",
+          "<b>Symptoms:</b> ", input$symptom_description, "<br/>",
+          "<b>Symptoms Onset Date:</b> ", input$symptom_onset_date, "<br/>",
           "<hr>",
           "<b>Country:</b> ", loc$country, "<br/>",
           "<b>", label_l1, ":</b> ", loc$level1, "<br/>", # Dynamic Label 1
           "<b>", label_l2, ":</b> ", loc$level2, "<br/>", # Dynamic Label 2
           "<b>", label_l3, " (ID):</b> ", loc$level3, "<br/>", # Dynamic Label 3
           "<hr>",
-          "<b>Symptoms:</b> ", input$symptom_description, "<br/>",
           "<b>Email:</b> ", input$email
         )),
         footer = tagList(
