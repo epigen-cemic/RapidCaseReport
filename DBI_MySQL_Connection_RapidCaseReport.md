@@ -49,7 +49,7 @@ db_insert_rumor <- function(con, data) {
 }
 
 # Example use inside a Shiny server after form confirmation:
-# db_insert_rumor(con, new_entry)
+# db_insert_report(con, new_entry)
 
 # Disconnect when done
 dbDisconnect(con)

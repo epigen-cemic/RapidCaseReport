@@ -97,7 +97,7 @@ format_new_entry <- function(input, loc) {
   # easy to update the database schema in one place.
   
   data.frame(
-    id_code = generate_id(), # Calls generic utility from rumor_utils.R
+    id_code = generate_id(), # Calls generic utility from utils.R
     consultation_date = as.character(input$consultation_date),
     sex = input$sex,
     birth_date = as.character(input$birth_date),

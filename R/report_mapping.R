@@ -45,7 +45,7 @@ plot_on_map <- function(map_id, sf_object, session, color = "blue", weight = 2, 
   # Validate and calculate geometry
   sf_object <- sf::st_make_valid(sf_object)
   bbox <- sf::st_bbox(sf_object)
-  zoom_level <- get_zoom(bbox) # Defined in rumor_utils.R
+  zoom_level <- get_zoom(bbox) # Defined in utils.R
   
   centroid <- sf::st_centroid(sf_object)
   coords <- sf::st_coordinates(centroid)

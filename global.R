@@ -30,11 +30,11 @@ data_dir <- here::here("raw_data")
 
 # Load scripts
 # Load Module Logic
-source(here::here("R", "rumor_geolocation.R"))
-source(here::here("R", "rumor_processing.R"))
-source(here::here("R", "rumor_database.R"))
-source(here::here("R", "rumor_mapping.R"))
-source(here::here("R", "rumor_form.R"))
+source(here::here("R", "report_geolocation.R"))
+source(here::here("R", "report_processing.R"))
+source(here::here("R", "report_database.R"))
+source(here::here("R", "report_mapping.R"))
+source(here::here("R", "report_form.R"))
 source(here::here("R", "utils.R"))
 
 

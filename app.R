@@ -1,17 +1,17 @@
 
 ########################################################################################
-## WP1.02 "Rumor Form" - Suspected cases rapid report form - v1 edition 10 final ##
+## WP1.02 "RapidCaseReport" Online form for rapid reporting of suspected cases v1.5 ##
 ########################################################################################
 
 source("global.R")
 
-ui <- rumorFormUI("form")
+ui <- caseReportUI("form")
 
 server <- function(input, output, session) {
   
   selected_loc <- geoLocationServer("form-geo", geo_config, data_dir)
 
-  rumorFormServer("form", selected_location = selected_loc, pool = db_pool) 
+  caseReportServer("form", selected_location = selected_loc, pool = db_pool) 
   
 }
 

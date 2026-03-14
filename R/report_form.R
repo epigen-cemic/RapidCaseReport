@@ -1,13 +1,13 @@
-#' Rumor Form UI
+#' Case Report UI
 #' @param id Character. The module ID.
 #' @export
-rumorFormUI <- function(id) {
+caseReportUI <- function(id) {
   ns <- NS(id)
   
   fluidPage(
     useShinyjs(),
     tags$head(
-      tags$title("Rumor Report Form"),
+      tags$title("Rapid Case Report"),
       tags$link(rel = "stylesheet", type = "text/css", href = "config.css")
     ),
     
@@ -20,8 +20,8 @@ rumorFormUI <- function(id) {
 
     div(class = "hero-section",
         div(class = "hero-content",
-            #div(class = "breadcrumb-text", "Home / Tools / Data analysis / Rumor Form"),
-            h1(class = "app-title", "Rumor Report Form - WP1.02 v1.2")
+            h1(class = "app-title", "Rapid Case Report"),
+            div(class = "breadcrumb-text", "Online form for rapid reporting of suspected cases.")
         )
     ),
     
@@ -82,13 +82,13 @@ rumorFormUI <- function(id) {
 
 
 
-#' Rumor Form Server
+#' Rapid Report Server
 #'
 #' @param id Character. The module ID.
 #' @param selected_location Reactive. The geographic state from the geoLocation module.
 #' @param pool The active database connection pool (Cloud or Local).
 #' @export
-rumorFormServer <- function(id, selected_location, pool) {
+caseReportServer <- function(id, selected_location, pool) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     

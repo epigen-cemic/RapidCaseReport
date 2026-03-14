@@ -25,7 +25,7 @@ get_db_connection <- function() {
     local_db_dir <- here::here("data")
     if (!dir.exists(local_db_dir)) dir.create(local_db_dir)
     
-    local_db_path <- file.path(local_db_dir, "rumor_database.db")
+    local_db_path <- file.path(local_db_dir, "report_database.db")
     
     pool <- pool::dbPool(
       drv = RSQLite::SQLite(),
