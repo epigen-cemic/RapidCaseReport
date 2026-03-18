@@ -71,6 +71,7 @@ The application uses `config.json` to dynamically build the location dropdowns a
     }
   }
 }
+```
 
 ## Live Demo
 Access the online deployed app here:  
