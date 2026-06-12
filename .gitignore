@@ -9,12 +9,13 @@
 .DS_Store
 
 # Authentication and secrets
+.Renviron
 .httr-oauth
+*.secrets
 
-# Config files (e.g. db credentials)
+# Config backups / alternate local configs
 config.yml
 config.yml.backup
-*.secrets
 
 # Quarto
 .quarto
@@ -29,11 +30,15 @@ rsconnect/
 *.sqlite
 *.db
 *.csv
-
+!raw_data/ICD10_codes.csv
 
 # Common temp and backup files
 *.log
 *.tmp
 *.bak
 *.zip
+*.patch
 *.tar.gz
+
+# renv local package cache
+R/renv/library/

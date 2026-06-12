@@ -1,54 +1,42 @@
-#' Initialize Database Connection Pool
-#' 
-#' @description Checks environment variables for cloud credentials. If found, 
-#' connects to the cloud; otherwise, creates a local 'data/' directory and SQLite DB.
-#' 
+#' Initialize local database connection pool
+#'
+#' @description Creates a local SQLite data store for submitted reports. The
+#' database is an internal persistence layer, not a user-facing download source.
+#'
+#' @param app_config List loaded from config.yaml.
 #' @return A pool object.
 #' @export
-get_db_connection <- function() {
-  db_url <- Sys.getenv("CLOUD_DB_URL")
-  
-  if (db_url != "") {
-    # --- Cloud Connection Path ---
-    pool <- pool::dbPool(
-      drv = RPostgres::Postgres(), 
-      dbname = Sys.getenv("DB_NAME"),
-      host = db_url,
-      user = Sys.getenv("DB_USER"),
-      password = Sys.getenv("DB_PASSWORD"),
-      port = as.numeric(Sys.getenv("DB_PORT", 5432))
-    )
-    message("Connected to Cloud Database.")
-    
-  } else {
-    # --- Local Fallback Path ---
-    local_db_dir <- here::here("data")
-    if (!dir.exists(local_db_dir)) dir.create(local_db_dir)
-    
-    local_db_path <- file.path(local_db_dir, "report_database.db")
-    
-    pool <- pool::dbPool(
-      drv = RSQLite::SQLite(),
-      dbname = local_db_path
-    )
-    
-    # Initialize generic tables if brand new
-    init_db_tables(pool) 
-    message("Connected to Local SQLite Database at: ", local_db_path)
+get_db_connection <- function(app_config = config) {
+  db_cfg <- app_config$database %||% list()
+  db_path <- db_cfg$path %||% "data/report_database.db"
+  db_path <- here::here(db_path)
+
+  db_dir <- dirname(db_path)
+  if (!dir.exists(db_dir)) {
+    dir.create(db_dir, recursive = TRUE, showWarnings = FALSE)
   }
-  
-  return(pool)
+
+  pool <- pool::dbPool(
+    drv = RSQLite::SQLite(),
+    dbname = db_path
+  )
+
+  init_db_tables(pool, table = db_cfg$table %||% "reports")
+  message("Connected to local app data store at: ", db_path)
+  pool
 }
 
-#' Initialize Database Tables
-#' @description Creates the standardized reports table using generic geographic levels.
+#' Initialize database tables
+#'
+#' @description Creates or migrates the standardized reports table using generic
+#' geographic levels.
 #' @param pool The active database pool.
+#' @param table Character table name. Defaults to reports.
 #' @export
-init_db_tables <- function(pool) {
-  # We use generic 'level' names to stay country-agnostic
-  if (!DBI::dbExistsTable(pool, "reports")) {
-    DBI::dbExecute(pool, "
-      CREATE TABLE reports (
+init_db_tables <- function(pool, table = "reports") {
+  if (!DBI::dbExistsTable(pool, table)) {
+    DBI::dbExecute(pool, sprintf(
+      "CREATE TABLE %s (
         id_code TEXT PRIMARY KEY,
         consultation_date TEXT,
         sex TEXT,
@@ -61,44 +49,90 @@ init_db_tables <- function(pool) {
         symptom_description TEXT,
         suspected_diagnosis TEXT,
         confirmation_time TEXT,
+        submitted_at TEXT,
         email TEXT,
         institution TEXT
-      )
-    ")
-    message('Database initialized with generic geographic levels.')
+      )",
+      DBI::dbQuoteIdentifier(pool, table)
+    ))
+    message("Database initialized with generic geographic levels.")
+  } else {
+    ensure_report_columns(pool, table = table)
   }
 }
 
-#' Insert New Entry
-#' @param new_entry Data frame (1 row).
+#' Add missing report columns to older local databases
 #' @param pool The active database pool.
-#' @export
-insert_to_db <- function(new_entry, pool) {
-  tryCatch({
-    DBI::dbWriteTable(pool, "reports", new_entry, append = TRUE)
-    message("Data successfully inserted.")
-  }, error = function(e) {
-    message("Error inserting data: ", e$message)
-  })
+#' @param table Character table name. Defaults to reports.
+#' @return Invisibly TRUE.
+#' @keywords internal
+ensure_report_columns <- function(pool, table = "reports") {
+  existing <- DBI::dbListFields(pool, table)
+  required <- c(
+    id_code = "TEXT",
+    consultation_date = "TEXT",
+    sex = "TEXT",
+    birth_date = "TEXT",
+    country = "TEXT",
+    level1 = "TEXT",
+    level2 = "TEXT",
+    level3 = "TEXT",
+    symptom_onset_date = "TEXT",
+    symptom_description = "TEXT",
+    suspected_diagnosis = "TEXT",
+    confirmation_time = "TEXT",
+    submitted_at = "TEXT",
+    email = "TEXT",
+    institution = "TEXT"
+  )
+
+  for (col in setdiff(names(required), existing)) {
+    DBI::dbExecute(
+      pool,
+      sprintf(
+        "ALTER TABLE %s ADD COLUMN %s %s",
+        DBI::dbQuoteIdentifier(pool, table),
+        DBI::dbQuoteIdentifier(pool, col),
+        required[[col]]
+      )
+    )
+  }
+
+  if ("submitted_at" %in% DBI::dbListFields(pool, table) && "confirmation_time" %in% existing) {
+    DBI::dbExecute(
+      pool,
+      sprintf(
+        "UPDATE %s SET %s = %s WHERE %s IS NULL AND %s IS NOT NULL",
+        DBI::dbQuoteIdentifier(pool, table),
+        DBI::dbQuoteIdentifier(pool, "submitted_at"),
+        DBI::dbQuoteIdentifier(pool, "confirmation_time"),
+        DBI::dbQuoteIdentifier(pool, "submitted_at"),
+        DBI::dbQuoteIdentifier(pool, "confirmation_time")
+      )
+    )
+  }
+
+  invisible(TRUE)
 }
 
-#' Download User History by Email
-#'
-#' @description Queries the database for all records associated with a specific email.
-#' @param email Character. The user's email address.
-#' @param pool The active database connection pool.
-#' @return A data frame of the user's report history.
+#' Insert New Entry
+#' @param new_entry Data frame with one row.
+#' @param pool The active database pool.
+#' @param table Character table name. Defaults to reports.
 #' @export
-download_email_data <- function(email, pool) {
-  # Use parameterized queries for security
-  query <- "SELECT * FROM reports WHERE email = ?"
-  
+insert_to_db <- function(new_entry, pool, table = config$database$table %||% "reports") {
   tryCatch({
-    # dbGetQuery works seamlessly across SQLite and Postgres via the pool
-    data <- DBI::dbGetQuery(pool, query, params = list(email))
-    return(data)
+    fields <- DBI::dbListFields(pool, table)
+    missing <- setdiff(fields, names(new_entry))
+    for (col in missing) {
+      new_entry[[col]] <- NA_character_
+    }
+    new_entry <- new_entry[, intersect(fields, names(new_entry)), drop = FALSE]
+    DBI::dbWriteTable(pool, table, new_entry, append = TRUE)
+    message("Data successfully inserted.")
+    TRUE
   }, error = function(e) {
-    message("Error retrieving user data: ", e$message)
-    return(data.frame())
+    message("Error inserting data: ", e$message)
+    FALSE
   })
 }

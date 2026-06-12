@@ -10,22 +10,20 @@
 #' @return A modified list containing the updated location state.
 #' @export
 update_location <- function(current_location, target_level, value) {
-  
+
   if (target_level == "level1") {
     current_location$level1 <- value
     current_location$level2 <- ""
     current_location$level3 <- ""
-    
+
   } else if (target_level == "level2") {
     current_location$level2 <- value
     current_location$level3 <- ""
-    
+
   } else if (target_level == "level3") {
-    # If specific formatting like zero-padding is needed, it is better 
-    # to handle that in the data processing step, but it can be done here.
     current_location$level3 <- as.character(value)
   }
-  
+
   return(current_location)
 }
 
@@ -42,80 +40,88 @@ update_location <- function(current_location, target_level, value) {
 #'
 #' @export
 plot_on_map <- function(map_id, sf_object, session, color = "blue", weight = 2, draw = FALSE) {
-  # Validate and calculate geometry
-  sf_object <- sf::st_make_valid(sf_object)
+  if (is.null(sf_object) || nrow(sf_object) == 0) {
+    return(invisible(NULL))
+  }
+
+  sf_object <- ensure_leaflet_crs(sf_object)
   bbox <- sf::st_bbox(sf_object)
-  zoom_level <- get_zoom(bbox) # Defined in utils.R
-  
-  centroid <- sf::st_centroid(sf_object)
+  zoom_level <- get_zoom(bbox)
+
+  centroid <- sf::st_centroid(sf::st_union(sf_object))
   coords <- sf::st_coordinates(centroid)
-  
+
   proxy <- leaflet::leafletProxy(map_id, session = session)
-  
+
   if (draw) {
     proxy <- proxy %>%
       leaflet::clearShapes() %>%
       leaflet::addPolygons(data = sf_object, color = color, weight = weight)
   }
-  
+
   proxy %>%
     leaflet::setView(lng = coords[1], lat = coords[2], zoom = zoom_level) %>%
     leaflet::fitBounds(bbox$xmin, bbox$ymin, bbox$xmax, bbox$ymax)
 }
 
-#' Plot Generic Level 3 Areas on Map
+#' Plot Generic Finest-Level Areas on Map
 #'
-#' @description Renders the finest geographic level (e.g., census fractions) on a Leaflet map. 
+#' @description Renders the finest configured geographic level on a Leaflet map.
 #' Highlights a specifically selected area and updates the corresponding UI text input.
 #'
 #' @param map_id Character. The ID of the Leaflet map output.
-#' @param sf_level3 An sf object containing all shapes for the current Level 3 context.
+#' @param sf_level3 An sf object containing all shapes for the current finest-level context.
 #' @param country Character. The selected country name.
 #' @param geo_config List. The global geographic configuration.
 #' @param selected_id Character or NULL. The specific ID of the area to highlight.
 #' @param session The Shiny session object.
 #'
 #' @export
-plot_fractions <- function(map_id, sf_level3, country, geo_config, selected_id, session) {
-  
-  # 1. Retrieve the specific ID column name for Level 3 from the config
-  l3_cfg <- geo_config[[country]]$mapping$fraction
+plot_finest_areas <- function(map_id, sf_level3, country, geo_config, selected_id, session) {
+  if (is.null(sf_level3) || nrow(sf_level3) == 0) {
+    return(invisible(NULL))
+  }
+
+  country_cfg <- geo_config[[country]]
+  finest_key <- get_finest_level_key(country_cfg)
+  l3_cfg <- get_finest_mapping_config(country_cfg)
   id_col <- l3_cfg$spatial_id
-  
-  # 2. Draw all available areas in the current context (e.g., all fractions in a department)
-  # We use the dynamic ID column for the layerId to ensure click events return the correct value
+  level_label <- get_level_label(country_cfg, finest_key)
+
+  sf_level3 <- ensure_leaflet_crs(sf_level3)
+
   leaflet::leafletProxy(map_id, session = session) %>%
     leaflet::clearShapes() %>%
     leaflet::addPolygons(
-      data = sf_level3, 
-      color = "red", 
+      data = sf_level3,
+      color = "red",
       weight = 2,
       layerId = as.character(sf_level3[[id_col]])
     )
-  
-  # 3. Handle specific selection highlighting
+
   if (!is.null(selected_id) && selected_id != "") {
-    # Filter the sf object using the dynamic ID column
     selected_row <- sf_level3[as.character(sf_level3[[id_col]]) == as.character(selected_id), ]
-    selected_row <- sf::st_make_valid(selected_row)
-    
-    # Update the UI text box (now generic Level 3 ID)
-    shiny::updateTextInput(session, "level3", value = paste("Selected Area ID:", selected_id))
-    
-    # Highlight the selection in green and focus the map
+    if (nrow(selected_row) == 0) {
+      return(invisible(NULL))
+    }
+    selected_row <- ensure_leaflet_crs(selected_row)
+
+    shiny::updateTextInput(session, "level3", value = paste("Selected", level_label, "ID:", selected_id))
+
     leaflet::leafletProxy(map_id, session = session) %>%
       leaflet::addPolygons(
-        data = selected_row, 
-        color = "green", 
+        data = selected_row,
+        color = "green",
         weight = 3,
         layerId = selected_id
       )
-    
-    # Reuse your existing zoom logic
-    plot_on_map(map_id, selected_row, session)  
-    
+
+    plot_on_map(map_id, selected_row, session)
+
   } else {
-    # Reset text if no specific area is selected
     shiny::updateTextInput(session, "level3", value = "Select on the map")
   }
 }
+
+# Backwards-compatible alias for older code paths.
+plot_fractions <- plot_finest_areas

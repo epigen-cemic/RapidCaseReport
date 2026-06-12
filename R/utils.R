@@ -51,3 +51,31 @@ update_location_state <- function(current_list, level, value) {
   }
   return(current_list)
 }
+#' Ensure spatial data are valid WGS84 geometries for Leaflet
+#'
+#' @description Leaflet expects longitude/latitude coordinates in EPSG:4326.
+#' This helper validates geometries and transforms them when a different CRS is
+#' declared.
+#'
+#' @param sf_object An sf object.
+#' @return An sf object with valid EPSG:4326 geometries where possible.
+#' @export
+ensure_leaflet_crs <- function(sf_object) {
+  if (is.null(sf_object) || nrow(sf_object) == 0) {
+    return(sf_object)
+  }
+
+  sf_object <- sf::st_make_valid(sf_object)
+  crs <- sf::st_crs(sf_object)
+
+  if (is.na(crs)) {
+    sf::st_crs(sf_object) <- 4326
+    return(sf_object)
+  }
+
+  if (!identical(crs$epsg, 4326L)) {
+    sf_object <- sf::st_transform(sf_object, 4326)
+  }
+
+  sf_object
+}

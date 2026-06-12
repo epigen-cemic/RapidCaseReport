@@ -1,31 +1,39 @@
 {
   "(Select Country)": {
     "name": "Global",
-    "levels": ["country", "Region", "District"],
+    "levels": ["country", "level1", "level2", "level3"],
     "mapping": {}
   },
-
   "Argentina": {
     "name": "Argentina",
     "file_name": "Argentina.gpkg",
-    "levels": ["country", "province", "department", "fraction"],
+    "levels": ["country", "level1", "level2", "level3"],
     "mapping": {
-      "province": {
+      "level1": {
         "db_column": "Level1",
-        "layer_name": "province",
-        "spatial_id": "cpr"
+        "layer_name": "Province",
+        "spatial_id": "cpr",
+        "name_col": "nam",
+        "ui_label": "Province",
+        "code_length": 2
       },
-      "department": {
+      "level2": {
         "db_column": "Level2",
         "parent_col": "cpr",
-        "layer_name": "department",
-        "spatial_id": "cde"
+        "layer_name": "Department",
+        "spatial_id": "cde",
+        "name_col": "nam",
+        "ui_label": "Department",
+        "code_length": 5
       },
-      "fraction": {
+      "level3": {
         "db_column": "Level3",
         "parent_col": "cde",
-        "layer_name": "fraction",
-        "spatial_id": "cod_indec"
+        "layer_name": "Fraction",
+        "spatial_id": "cod_indec",
+        "name_col": "cod_indec",
+        "ui_label": "Censal Fraction",
+        "code_length": 7
       }
     }
   }

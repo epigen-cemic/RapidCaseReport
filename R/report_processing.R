@@ -5,24 +5,28 @@
 #' @export
 validate_form_inputs <- function(consultation_date, birth_date, sex, loc, symptom_description, suspected_diagnosis, email, institution) {
   errors <- character()
-  
+
   # 1. Check for empty required text/select fields
   if (sex == "") errors <- c(errors, "Please select a Sex.")
   if (email == "") errors <- c(errors, "Email is required.")
   if (institution == "") errors <- c(errors, "Institution is required.")
   if (symptom_description == "") errors <- c(errors, "Symptom description is required.")
-  
+  if (suspected_diagnosis == "") errors <- c(errors, "Suspected diagnosis is required.")
+  if (email != "" && !grepl("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", email)) {
+    errors <- c(errors, "Please enter a valid email address.")
+  }
+
   # 2. Check Geographic Hierarchy
   if (is.null(loc$country) || loc$country == "") errors <- c(errors, "Please select a Country.")
   if (is.null(loc$level3) || loc$level3 == "" || loc$level3 == "Select on the map") {
     errors <- c(errors, "Please select a specific area on the map (Level 3).")
   }
-  
+
   # 3. Logical Date Checks
   if (birth_date > consultation_date) {
     errors <- c(errors, "Birth date cannot be after the consultation date.")
   }
-  
+
   return(errors)
 }
 
@@ -37,11 +41,11 @@ validate_form_inputs <- function(consultation_date, birth_date, sex, loc, sympto
 #' @export
 to_utf8 <- function(df) {
   char_cols <- names(df)[sapply(df, is.character)]
-  
+
   for (colname in char_cols) {
     df[[colname]] <- iconv(df[[colname]], from = "latin1", to = "UTF-8", sub = "")
   }
-  
+
   return(df)
 }
 
@@ -63,39 +67,46 @@ to_utf8 <- function(df) {
 #' @export
 get_info_about <- function(information, country, level, geo_config, data_dir, type = NULL, name = NULL) {
   country_cfg <- geo_config[[country]]
-  
-  # Search the mapping list for the entry where db_column matches our level (e.g. Level1)
-  layer_info <- NULL
-  for (m in country_cfg$mapping) {
-    if (m$db_column == level) { layer_info <- m; break }
+
+  level_key <- get_level_key_by_db_column(country_cfg, level) %||% level
+  layer_info <- get_mapping_config(country_cfg, level_key)
+  if (is.null(layer_info)) {
+    stop("No geographic mapping found for level: ", level, call. = FALSE)
   }
-  
+
   file_path <- file.path(data_dir, country_cfg$file_name)
+  if (!file.exists(file_path)) {
+    stop("Geographic data file not found: ", file_path, call. = FALSE)
+  }
+
   sql <- if (!is.null(type)) {
     sprintf("SELECT %s FROM %s WHERE %s = '%s'", information, layer_info$layer_name, type, name)
   } else {
     sprintf("SELECT %s FROM %s", information, layer_info$layer_name)
   }
-  
+
   result <- sf::st_read(file_path, query = sql, quiet = TRUE)
+  result <- ensure_leaflet_crs(result)
   return(to_utf8(result)) # Clean text encoding
 }
 
 #' Format New Database Entry
 #'
-#' @description Transforms raw Shiny inputs and the geographic state list into a 
+#' @description Transforms raw Shiny inputs and the geographic state list into a
 #' flattened data frame row, structured for database insertion.
 #'
 #' @param input The Shiny input object containing form values (e.g., consultation_date, sex).
 #' @param loc List. The currently selected geographic hierarchy (country, level1, level2, level3).
 #'
-#' @return A single-row data frame containing the formatted entry with a generated unique ID 
+#' @return A single-row data frame containing the formatted entry with a generated unique ID
 #' and a timestamp for confirmation.
 #' @export
 format_new_entry <- function(input, loc) {
   # This function centralizes the data transformation logic, making it
   # easy to update the database schema in one place.
-  
+
+  submitted_time <- as.character(Sys.time())
+
   data.frame(
     id_code = generate_id(), # Calls generic utility from utils.R
     consultation_date = as.character(input$consultation_date),
@@ -108,7 +119,8 @@ format_new_entry <- function(input, loc) {
     symptom_onset_date = as.character(input$symptom_onset_date),
     symptom_description = input$symptom_description,
     suspected_diagnosis = input$suspected_diagnosis,
-    confirmation_time = as.character(Sys.time()),
+    confirmation_time = submitted_time,
+    submitted_at = submitted_time,
     email = input$email,
     institution = input$institution,
     stringsAsFactors = FALSE
