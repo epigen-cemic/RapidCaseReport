@@ -1,42 +1,14 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-type: software
-title: "RapidCaseReport"
-abstract: "RapidCaseReport is a lightweight R/Shiny tool for rapid, standardized data collection and reporting of suspected cases or health-related rumours. It captures a minimal set of essential variables to support early, local-level surveillance and enables simple CSV exports for downstream analysis."
 authors:
-  - family-names: "Giordano"
-    given-names: "M. E."
-    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
-  - family-names: "Gili"
-    given-names: "J. A."
-    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
-  - family-names: "López-Camelo"
-    given-names: "J. S."
-    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
-  - family-names: "Poletta"
-    given-names: "F. A."
-    email: "fpoletta@cemic.edu.ar"
-    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
-contact:
-  - family-names: "Poletta"
-    given-names: "F. A."
-    email: "fpoletta@cemic.edu.ar"
-    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
+- family-names: "YOUR_NAME_HERE"
+  given-names: "YOUR_NAME_HERE"
+  orcid: "https://orcid.org/0000-0000-0000-0000"
+- family-names: "Lisa"
+  given-names: "Mona"
+  orcid: "https://orcid.org/0000-0000-0000-0000"
+title: "RapidCaseReport"
 version: 1.0.0
-# doi: "10.5281/zenodo.1234567"  # DOI: reemplazar con el DOI real al hacer el release
+doi: 10.5281/zenodo.1234
 date-released: 2026-06-12
-license: MIT
 url: "https://github.com/epigen-cemic/RapidCaseReport"
-keywords:
-  - "public health surveillance"
-  - "case reporting"
-  - "R Shiny"
-  - "epidemiology"
-  - "rumour surveillance"
-  - "digital health tool"
-references:
-  - type: grant
-    title: "Analysis for Action (formerly the Pandemic Preparedness Toolkit)"
-    institution:
-      name: "UK Office for National Statistics (ONS)"
-    notes: "RapidCaseReport was developed at CEMIC, the Argentina Delivery Partner for Analysis for Action. This work was supported by Wellcome (Grant number 226596/Z/22/Z)."
