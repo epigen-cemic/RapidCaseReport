@@ -23,6 +23,7 @@ contact:
     email: "fpoletta@cemic.edu.ar"
     affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
 version: 1.0.0
+# doi: "10.5281/zenodo.1234567"  # DOI: reemplazar con el DOI real al hacer el release
 date-released: 2026-06-12
 license: MIT
 url: "https://github.com/epigen-cemic/RapidCaseReport"
