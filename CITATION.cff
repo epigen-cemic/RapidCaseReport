@@ -1,4 +1,4 @@
-cff-version: 2.0.0
+cff-version: 2.0.1
 message: "If you use this software, please cite it as below."
 type: software
 title: "RapidCaseReport"
@@ -24,8 +24,8 @@ contact:
     orcid: "https://orcid.org/0000-0002-6102-8416"
     email: "fpoletta@cemic.edu.ar"
     affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
-version: 2.0.0
-# doi:
+version: 2.0.1
+doi: 10.5281/zenodo.21891007
 date-released: 2026-06-12
 license: MIT
 url: "https://github.com/epigen-cemic/RapidCaseReport"
