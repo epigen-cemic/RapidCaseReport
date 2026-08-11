@@ -175,7 +175,7 @@ Before publishing v2.0:
 ## Project
 
 **Project:** PPT-UK – Argentina Work Package WS5
-**Institution / Delivery Partner:** CEMIC
+**Institution / Delivery Partner:** CEMIC.
 The RapidCaseReport was developed at CEMIC, the Argentina Delivery Partner for Analysis for Action (formerly the Pandemic Preparedness Toolkit), a project led by the UK Office for National Statistics (ONS). This work was supported by the Wellcome (Grant number 226596/Z/22/Z).
 
 ## Citation
