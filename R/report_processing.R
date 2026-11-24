@@ -1,12 +1,22 @@
-#' Validate Form Inputs
+#' Validate required case form fields
 #'
-#' @description Checks for required fields and logical date constraints.
-#' @return A character vector of error messages (empty if valid).
+#' Check selected demographic, geographic, symptom, diagnosis, and professional fields and reject
+#' birth dates after consultation dates.
+#'
+#' @param consultation_date Date of consultation selected in the form.
+#' @param birth_date Date of birth selected in the form.
+#' @param sex Selected sex category.
+#' @param loc List of selected country and geographic area values.
+#' @param symptom_description Free-text symptom description.
+#' @param suspected_diagnosis Free-text suspected diagnosis.
+#' @param email Reporting professional email address.
+#' @param institution Name of reporting institution.
+#' @return A character vector of validation messages; empty when no listed error is found.
 #' @export
 validate_form_inputs <- function(consultation_date, birth_date, sex, loc, symptom_description, suspected_diagnosis, email, institution) {
   errors <- character()
 
-  # 1. Check for empty required text/select fields
+  # Validate mandatory report and professional information.
   if (sex == "") errors <- c(errors, "Please select a Sex.")
   if (email == "") errors <- c(errors, "Email is required.")
   if (institution == "") errors <- c(errors, "Institution is required.")
@@ -16,13 +26,13 @@ validate_form_inputs <- function(consultation_date, birth_date, sex, loc, sympto
     errors <- c(errors, "Please enter a valid email address.")
   }
 
-  # 2. Check Geographic Hierarchy
+  # Require a country and a finest-level area selected on the map.
   if (is.null(loc$country) || loc$country == "") errors <- c(errors, "Please select a Country.")
   if (is.null(loc$level3) || loc$level3 == "" || loc$level3 == "Select on the map") {
     errors <- c(errors, "Please select a specific area on the map (Level 3).")
   }
 
-  # 3. Logical Date Checks
+  # Disallow a birth date later than the consultation date.
   if (birth_date > consultation_date) {
     errors <- c(errors, "Birth date cannot be after the consultation date.")
   }
@@ -31,13 +41,13 @@ validate_form_inputs <- function(consultation_date, birth_date, sex, loc, sympto
 }
 
 
-#' Convert Character Columns to UTF-8
+#' Convert report text from Latin-1 to UTF-8
 #'
-#' @description Iterates through all character columns in a data frame and converts their encoding from latin1 to UTF-8.
+#' Convert character columns of a data frame using the explicitly specified Latin-1 source
+#' encoding.
 #'
-#' @param df A data frame containing the data to be converted.
-#'
-#' @return A data frame with character columns converted to UTF-8 encoding.
+#' @param df Data frame containing input or output records.
+#' @return A data frame with converted character fields.
 #' @export
 to_utf8 <- function(df) {
   char_cols <- names(df)[sapply(df, is.character)]
@@ -50,20 +60,22 @@ to_utf8 <- function(df) {
 }
 
 
-#' Query Spatial Data by Generic Level
+#' Read a configured geographic layer
 #'
-#' @description Retrieves spatial data from a specific hierarchical level (level1, level2, or level3)
-#' as defined in the global configuration for the selected country.
+#' Resolve a country and level into a GeoPackage query, optionally filter by one field, prepare
+#' geometries for Leaflet, and normalize text encoding.
 #'
-#' @param information Character. The columns to select (e.g., "*" for all).
-#' @param country Character. The country name (e.g., "Argentina").
-#' @param level Character. The abstract hierarchy level ("level1", "level2", or "level3").
-#' @param geo_config List. The geographic configuration object loaded from config.json.
-#' @param data_dir Character. The directory path where the Geopackage files are stored.
-#' @param type Character, optional. The column name for a conditional WHERE clause. Defaults to NULL.
-#' @param name Character, optional. The value to match in the conditional WHERE clause. Defaults to NULL.
+#' @details The current WHERE query uses string interpolation rather than parameter binding. Treat
+#'   input values as trusted configuration until query construction is hardened.
 #'
-#' @return A spatial data frame (sf object) with character columns converted to UTF-8.
+#' @param information SQL column expression to select from the spatial layer.
+#' @param country Configured country key.
+#' @param level Configured geographic level or database column.
+#' @param geo_config Country and geographic-layer configuration.
+#' @param data_dir Directory containing configured GeoPackage files.
+#' @param type Optional spatial-layer column to compare in a WHERE clause.
+#' @param name Value to compare against the selected geographic field.
+#' @return An sf object from the requested layer.
 #' @export
 get_info_about <- function(information, country, level, geo_config, data_dir, type = NULL, name = NULL) {
   country_cfg <- geo_config[[country]]
@@ -87,23 +99,21 @@ get_info_about <- function(information, country, level, geo_config, data_dir, ty
 
   result <- sf::st_read(file_path, query = sql, quiet = TRUE)
   result <- ensure_leaflet_crs(result)
-  return(to_utf8(result)) # Clean text encoding
+  return(to_utf8(result)) # Prepare text for UI display.
 }
 
-#' Format New Database Entry
+#' Build a report row from the form
 #'
-#' @description Transforms raw Shiny inputs and the geographic state list into a
-#' flattened data frame row, structured for database insertion.
+#' Flatten form and geographic state into a single record with a generated UUID and submission
+#' timestamp.
 #'
-#' @param input The Shiny input object containing form values (e.g., consultation_date, sex).
-#' @param loc List. The currently selected geographic hierarchy (country, level1, level2, level3).
-#'
-#' @return A single-row data frame containing the formatted entry with a generated unique ID
-#' and a timestamp for confirmation.
+#' @param input Shiny input object for the current module.
+#' @param loc List of selected country and geographic area values.
+#' @return A one-row data frame matching the local reports schema.
 #' @export
 format_new_entry <- function(input, loc) {
-  # This function centralizes the data transformation logic, making it
-  # easy to update the database schema in one place.
+  # Keep the report-to-storage field mapping in one place so all submissions
+  # use the same field names and timestamp format.
 
   submitted_time <- as.character(Sys.time())
 

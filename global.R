@@ -20,14 +20,13 @@ library(uuid)
 # --- Settings ---
 config <- yaml::yaml.load_file("config.yaml")
 
-# Shared helpers adapted from the Digital Dashboard/API-POP v2 pattern.
+# Load reusable configuration and UI helpers.
 source(here::here("R", "shared", "config_helpers.R"))
 
 app_version <- config$app$version %||% "2.0.0"
 geo_config <- jsonlite::fromJSON(here::here("config.json"), simplifyVector = FALSE)
 
-# Spatial data directory. v2.0 uses raw_data/ by default because it contains
-# Argentina.gpkg and supporting reference files.
+# Resolve the configured directory of country-specific geographic files.
 data_dir <- here::here(config$data_dir %||% "raw_data")
 if (!dir.exists(data_dir) && dir.exists(here::here("raw_data"))) {
   data_dir <- here::here("raw_data")

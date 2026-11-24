@@ -1,20 +1,19 @@
-#' Generate a Unique Identifier
+#' Generate a report identifier
 #'
-#' @description Generates a universally unique identifier (UUID).
+#' Generate a UUID through the uuid package.
 #'
-#' @return A character string containing the UUID.
+#' @return A UUID character value.
 #' @export
 generate_id <- function() {
   uuid::UUIDgenerate()
 }
 
-#' Calculate Map Zoom Level
+#' Choose a Leaflet map zoom level
 #'
-#' @description Determines the appropriate map zoom level based on the dimensions of a spatial bounding box.
+#' Estimate a practical map zoom level from a geographic bounding box span.
 #'
-#' @param bbox A spatial bounding box object (e.g., from sf::st_bbox) containing xmin, xmax, ymin, and ymax.
-#'
-#' @return A numeric value representing the recommended zoom level.
+#' @param bbox Spatial bounding box with xmin, xmax, ymin and ymax.
+#' @return A numeric zoom level.
 #' @export
 get_zoom <- function(bbox) {
   max_dim <- max(bbox$xmax - bbox$xmin, bbox$ymax - bbox$ymin)
@@ -31,12 +30,14 @@ get_zoom <- function(bbox) {
   )
 }
 
-#' Update Generic Location State
-#' @description Updates abstract levels without hardcoded country terms.
-#' @param current_list List. The current location state.
-#' @param level Character. The level to update ("level1", "level2", "level3").
-#' @param value Character. The new selection value.
-#' @return A modified list.
+#' Update selected geographic values
+#'
+#' Set the supplied level and clear its descendants from the current geographic selection list.
+#'
+#' @param current_list List of currently selected geographic areas.
+#' @param level Configured geographic level or database column.
+#' @param value New selected geographic value.
+#' @return The updated selection list.
 #' @export
 update_location_state <- function(current_list, level, value) {
   if (level == "level1") {
@@ -51,14 +52,16 @@ update_location_state <- function(current_list, level, value) {
   }
   return(current_list)
 }
-#' Ensure spatial data are valid WGS84 geometries for Leaflet
+#' Prepare spatial geometries for Leaflet
 #'
-#' @description Leaflet expects longitude/latitude coordinates in EPSG:4326.
-#' This helper validates geometries and transforms them when a different CRS is
-#' declared.
+#' Attempt to repair invalid geometries and ensure an EPSG:4326 coordinate reference system for
+#' display. When CRS is missing, the current code assumes WGS84.
 #'
-#' @param sf_object An sf object.
-#' @return An sf object with valid EPSG:4326 geometries where possible.
+#' @details If no source CRS is declared, the implementation assigns EPSG:4326. That assumption
+#'   must be validated against the geographic source.
+#'
+#' @param sf_object sf object to display on the map.
+#' @return An sf object prepared for mapping.
 #' @export
 ensure_leaflet_crs <- function(sf_object) {
   if (is.null(sf_object) || nrow(sf_object) == 0) {

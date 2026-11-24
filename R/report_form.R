@@ -1,5 +1,10 @@
-#' Case Report UI
-#' @param id Character. The module ID.
+#' Build the case reporting form
+#'
+#' Compose demographic, geographic, clinical, and professional fields with a map, confirmation
+#' flow, and current-session export.
+#'
+#' @param id Character Shiny module identifier used for namespacing.
+#' @return A Shiny UI tag tree.
 #' @export
 caseReportUI <- function(id) {
   ns <- NS(id)
@@ -76,17 +81,32 @@ caseReportUI <- function(id) {
 }
 
 
-#' Rapid Report Server
+#' Handle report validation and submission
 #'
-#' @param id Character. The module ID.
-#' @param selected_location Reactive. The geographic state from the geoLocation module.
-#' @param pool The active database connection pool.
+#' Validate form inputs, display a confirmation dialog, save confirmed reports, keep a
+#' current-session preview, and provide its CSV download.
+#'
+#' @details The confirmation dialog is currently assembled from unescaped user-entered HTML and the
+#'   final report is reconstructed from live form inputs. Those are separate correctness/security
+#'   issues; this documentation-only revision does not change the behavior.
+#'
+#' @param id Character Shiny module identifier used for namespacing.
+#' @param selected_location Reactive expression holding current geographic selections.
+#' @param pool Database pool used by the reporting application.
+#' @return The Shiny module server side-effect result.
 #' @export
 caseReportServer <- function(id, selected_location, pool) {
   moduleServer(id, function(input, output, session) {
 
     form_records <- reactiveVal(data.frame())
 
+    #' Create an empty session preview
+    #'
+    #' Return the session-table schema with no records for display before the first successful
+    #' submission.
+    #'
+    #' @return An empty data frame with display-oriented columns.
+    #' @keywords internal
     empty_preview <- function() {
       data.frame(
         Consultation = character(0),

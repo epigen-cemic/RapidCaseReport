@@ -42,3 +42,5 @@ rsconnect/
 
 # renv local package cache
 R/renv/library/
+.Rproj.user
+.Rproj.user

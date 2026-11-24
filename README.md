@@ -1,189 +1,34 @@
-# RapidCaseReport v2.0
+# RapidCaseReport
 
-RapidCaseReport is an R/Shiny application for rapid reporting of suspected health events. It collects individual, location, symptom, diagnosis, and professional information through a guided form and stores confirmed submissions in a local app data store.
+RapidCaseReport is an R/Shiny form for recording suspected health events with geographic selection on a Leaflet map. Confirmed reports are saved in a local SQLite data store. The user interface displays and exports only reports saved during the current Shiny session.
 
-Version 2.0 aligns the app more closely with the current RAP tool family, including API-POP v2.0, CUSUM RAP, Geospatial RAP, and the Digital Dashboard.
+**Software release line:** v2.x. **Documentation revision:** 2026-11-23. Source version metadata needs reconciliation (`config.yaml` badge `2.0.0`, `CITATION.cff` software version `2.0.1`).
 
-## Main changes in v2.0
+## Quick start
 
-- Updated application version and documentation to v2.0.
-- Removed the previous user-facing database-history download workflow.
-- Kept only the current-session CSV download for records submitted during the active session.
-- Added timestamped CSV filenames.
-- Added an empty CSV output instead of failing when no session records exist.
-- Added shared helper functions under `R/shared/`.
-- Updated geographic helpers to use config-driven `level1`, `level2`, and `level3` mappings.
-- Added `name_col` support for spatial layer labels.
-- Added CRS safety for Leaflet maps through `ensure_leaflet_crs()`.
-- Improved map/table containment so the map no longer overflows over the record table.
-- Updated the theme to better match the newer RAP tools.
-- Removed `.Renviron` as a required project file.
-- Simplified local SQLite persistence as an internal app detail.
+1. Review `config.yaml`: `data_dir` (default `raw_data`), `database.path` (default `data/report_database.db`) and table name.
+2. Ensure `raw_data/Argentina.gpkg` or your configured country data exists and matches `config.json`.
+3. Install packages imported by `global.R`; review `R/renv.lock` and project environment setup before attempting a reproducible restore.
+4. From the project root, run `shiny::runApp(".")` using a **test database first**. Startup may initialize or alter the SQLite table.
+5. Select a country and areas, click a final area on the map, complete the form, confirm a synthetic report, and verify current-session CSV download.
 
-## Project structure
+## Main modules
 
-```text
-RapidCaseReport/
-├── app.R
-├── global.R
-├── config.json
-├── config.yaml
-├── R/
-│   ├── report_database.R
-│   ├── report_form.R
-│   ├── report_geolocation.R
-│   ├── report_mapping.R
-│   ├── report_processing.R
-│   ├── utils.R
-│   └── shared/
-│       └── config_helpers.R
-├── data/
-├── data_prep/
-│   ├── merge_layers.R
-│   ├── Preparing Geographic Data.md
-│   └── prepare_rapid_case_report_database.R
-├── raw_data/
-│   ├── Argentina.gpkg
-│   ├── ICD10_codes.csv
-│   └── localities.parquet
-└── www/
-    ├── AnalysisforAction_white.png
-    └── config.css
-```
+`app.R` → `global.R` → `R/report_form.R`, `R/report_geolocation.R`, `R/report_processing.R`, `R/report_database.R` and `R/report_mapping.R`. Shared geographic labels and UI utilities are in `R/shared/config_helpers.R`; `R/utils.R` holds general map/ID helpers. Styling is under `www/config.css`.
 
-## Requirements
+## Documentation by audience
 
-Recommended R packages:
+- [Documentation index](www/docs/DOCUMENTATION_INDEX.md)
+- [End-User Guide](www/docs/USER_GUIDE.md) (`www/docs/RapidCaseReport_User-Guide.docx`)
+- [Institutional Setup Guide](www/docs/INSTITUTIONAL_SETUP_GUIDE.md)
+- [Developer Guide](www/docs/DEVELOPER_GUIDE.md)
+- [Reports data dictionary](www/docs/Data_Dictionary_RapidCaseReport.md)
+- [Local data store reference](www/docs/RapidCaseReport_Local_Data_Store.md)
 
-```r
-install.packages(c(
-  "shiny",
-  "shinyjs",
-  "leaflet",
-  "DT",
-  "here",
-  "jsonlite",
-  "dplyr",
-  "sf",
-  "yaml",
-  "DBI",
-  "pool",
-  "RSQLite",
-  "uuid"
-))
-```
+## Current limitations
 
-## Run locally
+This source does not support administrator-password access, email-based historical exports, external database adapters or report editing. Data validation is not comprehensive for symptom-onset chronology; confirmation HTML and geographic query interpolation require security hardening before an unrestricted deployment. A reproducible automated application test suite should be established before institutional deployment.
 
-```r
-setwd("path/to/RapidCaseReport")
-shiny::runApp()
-```
+## Operational data handling
 
-Or from a terminal:
-
-```bash
-Rscript --vanilla -e "shiny::runApp('.', host = '127.0.0.1', port = 3838)"
-```
-
-## Configuration
-
-### `config.yaml`
-
-`config.yaml` controls app-level paths and version metadata.
-
-```yaml
-app:
-  version: "2.0.0"
-
-data_dir: "raw_data"
-
-database:
-  type: "sqlite"
-  path: "data/report_database.db"
-  table: "reports"
-```
-
-The local SQLite file is an internal persistence layer. It should not be presented as a user-facing database download.
-
-### `config.json`
-
-`config.json` controls countries, geographic levels, spatial layers, and labels.
-
-Each country should define:
-
-- `name`
-- `file_name`
-- `levels`
-- `mapping`
-
-Each mapped level should include:
-
-- `db_column`
-- `layer_name`
-- `spatial_id`
-- `name_col`
-- `ui_label`
-- `parent_col` for child levels
-
-## Preparing geographic data
-
-Use `data_prep/merge_layers.R` to create country `.gpkg` files with the required layers.
-
-Each configured spatial layer should contain the configured `spatial_id`, `name_col`, and parent columns required by `config.json`.
-
-## Preparing/resetting local app data
-
-For local testing, run:
-
-```r
-source("data_prep/prepare_rapid_case_report_database.R")
-```
-
-This creates an empty `reports` table with the current v2.0 schema.
-
-Do not commit local app data containing test or real reports.
-
-## End-user workflow
-
-1. Enter general case information.
-2. Select the case location through the configured geography dropdowns and map.
-3. Enter symptom and suspected diagnosis information.
-4. Enter professional information.
-5. Click **Submit Report**.
-6. Review the confirmation dialog carefully.
-7. Confirm to save the record.
-8. Download the current session records as CSV if needed.
-
-Confirmed records are saved immediately and cannot be edited from this form.
-
-## Release checklist
-
-Before publishing v2.0:
-
-- Confirm the app starts locally.
-- Confirm `R/shared/config_helpers.R` exists.
-- Confirm `data_dir` points to `raw_data` or another folder containing the configured `.gpkg` file.
-- Confirm the database-history download button is gone.
-- Confirm map selections work.
-- Confirm the map does not overflow over the records table.
-- Confirm valid form submission works.
-- Confirm invalid/missing required fields show validation messages.
-- Confirm current-session CSV download works, including with zero rows.
-- Confirm `.Renviron`, `.RData`, `.Rhistory`, `.Rproj.user/`, `.git/`, and local test data are not included in release zips.
-
-## Project
-
-**Project:** PPT-UK – Argentina Work Package WS5
-**Institution / Delivery Partner:** CEMIC.
-The RapidCaseReport was developed at CEMIC, the Argentina Delivery Partner for Analysis for Action (formerly the Pandemic Preparedness Toolkit), a project led by the UK Office for National Statistics (ONS). This work was supported by the Wellcome (Grant number 226596/Z/22/Z).
-
-## Citation
-
-If you use RapidCaseReport in research, publications, or other work, please cite the software using the following DOI:
-Giordano, M. E., Gili, J. A., López-Camelo, J. S.& Poletta, F. A. (2026). RapidCaseReport (Version v2.0.1) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21891007
-
-**RapidCaseReport v2.0.1**  
-https://doi.org/10.5281/zenodo.21891007
-
-Citation metadata are also available in the `CITATION.cff` file.
+The SQLite file is local to the Shiny host; it is not a download offered to end users. Configure appropriate authorization, encrypted transport, filesystem protection, backup/restore and data retention before using real case records.

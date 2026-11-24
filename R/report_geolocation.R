@@ -1,4 +1,10 @@
-#' Geographic Selection UI
+#' Build the geographic selection interface
+#'
+#' Create cascading geographic selectors, a read-only finest-area identifier field, and a Leaflet
+#' map output.
+#'
+#' @param id Character Shiny module identifier used for namespacing.
+#' @return A list containing sidebar and main UI elements.
 #' @export
 geoLocationUI <- function(id) {
   ns <- NS(id)
@@ -18,11 +24,15 @@ geoLocationUI <- function(id) {
   list(sidebar = sidebar, main = main)
 }
 
-#' Geographic Selection Server
+#' Manage geographic selection and map interactions
 #'
-#' @param id Character. The module ID.
-#' @param geo_config List. The configuration object loaded from config.json.
-#' @param data_dir Character. The path to the directory containing Geopackages.
+#' Load configured spatial levels, update dependent selectors and map layers, and store the
+#' selected country and area values.
+#'
+#' @param id Character Shiny module identifier used for namespacing.
+#' @param geo_config Country and geographic-layer configuration.
+#' @param data_dir Directory containing configured GeoPackage files.
+#' @return A reactive expression for the current geographic selection.
 #' @export
 geoLocationServer <- function(id, geo_config, data_dir) {
   moduleServer(id, function(input, output, session) {
@@ -46,6 +56,14 @@ geoLocationServer <- function(id, geo_config, data_dir) {
         setView(lng = -63.6, lat = -38.4, zoom = 5)
     })
 
+    #' Reset dependent geographic selections
+    #'
+    #' Clear geographic selections beneath the country level and reset the map state when a
+    #' higher-level selection changes.
+    #'
+    #' @return The side-effect result of updating geographic input controls.
+    #' @keywords internal
+    # Clearing a parent selection must also invalidate all lower-level areas.
     reset_to_level_1 <- function() {
       updateTextInput(session, "level3", value = "Select on the map")
       updateSelectInput(session, "level2", choices = c("No information available" = ""))

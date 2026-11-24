@@ -1,10 +1,13 @@
-#' Initialize local database connection pool
+#' Open the local reporting data store
 #'
-#' @description Creates a local SQLite data store for submitted reports. The
-#' database is an internal persistence layer, not a user-facing download source.
+#' Resolve the configured SQLite file, create its parent directory if needed, initialize the
+#' reports schema, and return a database pool.
 #'
-#' @param app_config List loaded from config.yaml.
-#' @return A pool object.
+#' @details Opening this pool also initializes or changes the local reports schema; do not treat it
+#'   as a read-only connection test.
+#'
+#' @param app_config Parsed application configuration, including local database settings.
+#' @return An initialized connection pool.
 #' @export
 get_db_connection <- function(app_config = config) {
   db_cfg <- app_config$database %||% list()
@@ -21,17 +24,20 @@ get_db_connection <- function(app_config = config) {
     dbname = db_path
   )
 
+  # Initialization can create or alter local tables; it is not a read-only check.
   init_db_tables(pool, table = db_cfg$table %||% "reports")
   message("Connected to local app data store at: ", db_path)
   pool
 }
 
-#' Initialize database tables
+#' Initialize or migrate the local reports table
 #'
-#' @description Creates or migrates the standardized reports table using generic
-#' geographic levels.
-#' @param pool The active database pool.
-#' @param table Character table name. Defaults to reports.
+#' Create the reports table when absent; otherwise add missing columns through the existing
+#' migration helper.
+#'
+#' @param pool Database pool used by the reporting application.
+#' @param table Name of the destination reports table.
+#' @return The result of schema initialization (invisible when applicable).
 #' @export
 init_db_tables <- function(pool, table = "reports") {
   if (!DBI::dbExistsTable(pool, table)) {
@@ -61,10 +67,17 @@ init_db_tables <- function(pool, table = "reports") {
   }
 }
 
-#' Add missing report columns to older local databases
-#' @param pool The active database pool.
-#' @param table Character table name. Defaults to reports.
-#' @return Invisibly TRUE.
+#' Add missing columns to legacy report tables
+#'
+#' Alter an existing reports table to include current report columns and copy confirmation_time
+#' into missing submitted_at values.
+#'
+#' @details On legacy tables, this operation performs ALTER TABLE and UPDATE statements. Existing
+#'   report rows are not deleted by this function.
+#'
+#' @param pool Database pool used by the reporting application.
+#' @param table Name of the destination reports table.
+#' @return Invisible TRUE on completion.
 #' @keywords internal
 ensure_report_columns <- function(pool, table = "reports") {
   existing <- DBI::dbListFields(pool, table)
@@ -115,10 +128,15 @@ ensure_report_columns <- function(pool, table = "reports") {
   invisible(TRUE)
 }
 
-#' Insert New Entry
-#' @param new_entry Data frame with one row.
-#' @param pool The active database pool.
-#' @param table Character table name. Defaults to reports.
+#' Append one report to the local data store
+#'
+#' Align a report row to the existing destination columns and append it; on failure, log a message
+#' and return FALSE.
+#'
+#' @param new_entry Single-row data frame containing a report for insertion.
+#' @param pool Database pool used by the reporting application.
+#' @param table Name of the destination reports table.
+#' @return TRUE when append succeeds, otherwise FALSE.
 #' @export
 insert_to_db <- function(new_entry, pool, table = config$database$table %||% "reports") {
   tryCatch({
@@ -127,6 +145,7 @@ insert_to_db <- function(new_entry, pool, table = config$database$table %||% "re
     for (col in missing) {
       new_entry[[col]] <- NA_character_
     }
+    # Use destination-column order and avoid adding fields absent from the table.
     new_entry <- new_entry[, intersect(fields, names(new_entry)), drop = FALSE]
     DBI::dbWriteTable(pool, table, new_entry, append = TRUE)
     message("Data successfully inserted.")

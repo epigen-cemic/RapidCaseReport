@@ -1,13 +1,11 @@
-#' Update Geographic Hierarchy State
+#' Update a geographic selection list
 #'
-#' @description Updates a generic geographic level (level1, level2, level3) within the location state list.
-#' Automatically clears lower-level geographies when a higher-level one changes.
+#' Set one geographic level and clear lower-level values when a parent changes.
 #'
-#' @param current_location A list representing the current state of selected generic locations.
-#' @param target_level Character. The geographic hierarchy level to update ("level1", "level2", "level3").
-#' @param value Character or Numeric. The new value to assign to the specified level.
-#'
-#' @return A modified list containing the updated location state.
+#' @param current_location List of currently selected geographic areas.
+#' @param target_level Geographic level to update.
+#' @param value New selected geographic value.
+#' @return The updated geographic selection list.
 #' @export
 update_location <- function(current_location, target_level, value) {
 
@@ -27,17 +25,17 @@ update_location <- function(current_location, target_level, value) {
   return(current_location)
 }
 
-#' Plot Spatial Object on Map
+#' Draw a spatial layer in Leaflet
 #'
-#' @description Updates a Leaflet map to focus on a spatial object and optionally draw it.
+#' Center or draw an sf object on the existing map with the supplied border settings.
 #'
-#' @param map_id Character. The ID of the Leaflet map.
-#' @param sf_object sf object. The spatial features to plot.
-#' @param session The Shiny session object.
-#' @param color Character. Border color.
-#' @param weight Numeric. Stroke weight.
-#' @param draw Logical. If TRUE, clears previous shapes and draws the new ones.
-#'
+#' @param map_id Namespace-qualified Leaflet map output identifier.
+#' @param sf_object sf object to display on the map.
+#' @param session Active Shiny session.
+#' @param color Leaflet shape border color.
+#' @param weight Leaflet shape border width.
+#' @param draw Whether to redraw the shapes on the map.
+#' @return A Leaflet proxy result.
 #' @export
 plot_on_map <- function(map_id, sf_object, session, color = "blue", weight = 2, draw = FALSE) {
   if (is.null(sf_object) || nrow(sf_object) == 0) {
@@ -64,18 +62,18 @@ plot_on_map <- function(map_id, sf_object, session, color = "blue", weight = 2, 
     leaflet::fitBounds(bbox$xmin, bbox$ymin, bbox$xmax, bbox$ymax)
 }
 
-#' Plot Generic Finest-Level Areas on Map
+#' Display selectable finest-level areas
 #'
-#' @description Renders the finest configured geographic level on a Leaflet map.
-#' Highlights a specifically selected area and updates the corresponding UI text input.
+#' Draw the configured finest geographic units, highlight the selected area, and update its
+#' identifier field.
 #'
-#' @param map_id Character. The ID of the Leaflet map output.
-#' @param sf_level3 An sf object containing all shapes for the current finest-level context.
-#' @param country Character. The selected country name.
-#' @param geo_config List. The global geographic configuration.
-#' @param selected_id Character or NULL. The specific ID of the area to highlight.
-#' @param session The Shiny session object.
-#'
+#' @param map_id Namespace-qualified Leaflet map output identifier.
+#' @param sf_level3 sf object containing available finest-level geographic areas.
+#' @param country Configured country key.
+#' @param geo_config Country and geographic-layer configuration.
+#' @param selected_id Identifier of the area to highlight.
+#' @param session Active Shiny session.
+#' @return A Leaflet proxy/update result.
 #' @export
 plot_finest_areas <- function(map_id, sf_level3, country, geo_config, selected_id, session) {
   if (is.null(sf_level3) || nrow(sf_level3) == 0) {
