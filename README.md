@@ -2,7 +2,6 @@
 
 RapidCaseReport is an R/Shiny form for recording suspected health events with geographic selection on a Leaflet map. Confirmed reports are saved in a local SQLite data store. The user interface displays and exports only reports saved during the current Shiny session.
 
-**Software release line:** v2.x. **Documentation revision:** 2026-11-23. Source version metadata needs reconciliation (`config.yaml` badge `2.0.0`, `CITATION.cff` software version `2.0.1`).
 
 ## Quick start
 
